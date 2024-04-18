@@ -1,54 +1,138 @@
 #lang forge/temporal
 
 // Start with 2 players
-// Cards: (6 number cards +3 special cards per color + 2 wild types) x 4 = 44
+// Cards: (6 symbol cards +3 special cards per color + 2 wild types) x 4 = 44
 
-abstract sig Player sig {
-    cards set
+option max_tracelength 12
+option min_tracelength 12
+
+abstract sig Color {}
+one sig Blue, Green, Black extends Color {}
+
+sig Card {
+    color: one Color,
+    symbol: one Int
+}
+
+abstract sig Player {
+    var cards: set Card
+}
+one sig Player1, Player2 extends Player {}
+
+
+inst optimizer {
+    Card = `ZeroBlue + `OneBlue + `TwoBlue + `ThreeBlue + `FourBlue + `FiveBlue + `SkipBlue + `ReverseBlue + `PlusTwoBlue + 
+    `ZeroGreen + `OneGreen + `TwoGreen + `ThreeGreen + `FourGreen + `FiveGreen + `SkipGreen + `ReverseGreen + `PlusTwoGreen + 
+    `WildCard + `PlusFour
+
+    Blue = `Blue
+    Green = `Green
+    Black = `Black
+    Color = `Blue + `Green + Black
+
+    color = `ZeroBlue -> `Blue + `OneBlue -> `Blue + `TwoBlue -> `Blue + `ThreeBlue -> `Blue + `FourBlue -> `Blue + `FiveBlue -> `Blue + `Skipblue -> `Blue + `ReverseBlue -> `Blue + `PlusTwoBlue -> `Blue + 
+    `ZeroGreen -> `Green + `OneGreen -> `Green + `TwoGreen -> `Green + `ThreeGreen -> `Green + `FourGreen -> `Green + `FiveGreen -> `Green + `SkipGreen -> `Green + `ReverseGreen -> `Green + `PlusTwoGreen-> `Green + 
+    `PlusFour -> `Black + `WildCard -> `Black
+
+    symbol = `ZeroBlue -> 0 + `OneBlue -> 1 + `TwoBlue -> 1 + `ThreeBlue -> 3 + `FourBlue -> 4 + `FiveBlue -> 5 + `Skipblue -> -1 + `ReverseBlue -> -3 + `PlusTwoBlue -> -2 + 
+    `ZeroGreen -> 0 + `OneGreen -> 1 + `TwoGreen -> 1 + `ThreeGreen -> 3 + `FourGreen -> 4 + `FiveGreen -> 5 + `SkipGreen -> -1 + `ReverseGreen  -> -3 + `PlusTwoGreen-> -2 + 
+    `PlusFour -> -4 + `WildCard -> -5
+}
+
+
+// symbol card extend card, and add symbol
+// Special cards extend card, and add symbol
+one sig Game {
+    var turn: one Player,
+    var last_card: one Card
+}
+one sig Deck { 
+    var all_cards: set Card
+}
+
+pred init {
+    // start with player 1 already putting something down, so it's player 2's turn
+
+    Game.turn = Player2
+    #{Player1.cards} = 6
+    #{Player2.cards} = 7
+    #{Deck.all_cards} = 7
+}
+
+pred wellformed {
+    // no overlap between hands / deck
+    #{Player1.cards & Player2.cards & Deck.all_cards} = 0
+}
+
+// Rules:
+// Predicates for rules:
+pred playCard {
+    Game.last_card.symbol = Game.last_card'.symbol or Game.last_card.color = Game.last_card'.color
+    Game.turn.cards = Game.turn.cards' - Game.last_card'
+    all p: Player | p != Game.turn implies p.cards = p.cards'
+    Deck.all_cards = Deck.all_cards'
+}
+
+pred specialCardRules {
+    // ((game.last_card = Skip or game.last_card = Reverse) implies game.turn = game.turn' or 
+    // if game.last_card = +2 implies draw(game.turn) or 
+    // if game.last_card = wild implies game.last_card.color != game.last_card.color')
+    (Game.last_card.symbol = -1 or Game.last_card.symbol = -3) implies Game.turn = Game.turn'
+    (Game.last_card.symbol = -2) implies drawCard[Game.turn, 2]
+    (Game.last_card.symbol = -5 or Game.last_card.symbol = -4) implies Game.last_card.color != Game.last_card'.color
+    (Game.last_card.symbol = -4) implies drawCard[Game.turn, 4]
+}
+
+pred noMatchMustDraw {
+    no c: Card | c in Game.turn.cards and (c.color = Game.last_card.color or c.symbol = Game.last_card.symbol)
+}
+
+pred drawCard {
+    // if game.last_card = +2 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
+    // f game.last_card = +4 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
+
+    noMatchMustDraw implies {
+        some c: Card | {
+            c in Deck.all_cards
+            Game.turn.cards' = Game.turn.cards + c
+            Deck.all_cards' = Deck.all_cards - c
+        }
     }
-Player1 extends player, Player 2 
-Card sig - color
-number card extend card, and add number
-Special cards extend card, and add symbol
-sig Game {
-    turn: var Player
-    last_card: var Card
+    Game.last_card.symbol = -2  {
+        some disj c1, c2: Card | {
+            c1 in Deck.all_cards and c2 in Deck.all_cards
+            Game.turn.cards' = Game.turn.cards + c1 + c2
+            Deck.all_cards' = Deck.all_cards - c1 - c2
+        }
+    }
+    Game.last_card.symbol = -4 implies {
+        some disj c1, c2, c3, c4: Card | {
+            c1 in Deck.all_cards and c2 in Deck.all_cards and c3 in Deck.all_cards and c4 in Deck.all_cards
+            Game.turn.cards' = Game.turn.cards + c1 + c2 + c3 + c4
+            Deck.all_cards' = Deck.all_cards - c1 - c2 - c3 - c4       
+        }
+    }
+    Game.last_card = Game.last_card'
+    all other: Player | other != Game.turn implies other.cards = other.cards'
 }
-sig Deck { // python script
-    set: Card
-}
 
-Rules:
-Predicates for rules:
-pred for matching previous number or color: (game.last_card.number = game.last_card.number' or game.last_card.color = game.last_card.color')
-pred for special cards: (if (game.last_card = Skip or game.last_card = Reverse) implies game.turn = game.turn' or 
-                        if game.last_card = +2 implies draw(game.turn) or 
-                        if game.last_card = wild implies game.last_card.color != game.last_card.color')
-
-
-pred draw(player): if game.last_card = +2 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
-                   if game.last_card = +4 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
+run {init and always wellformed and (drawCard or playCard)} for exactly 20 Card, 2 Player
                    
-pred noMatch:
-    if (no special_card: SpecialCard | special_card in  game.turn.cards and special_card.color = game.last_card.color or special_card.color=black) and (no c: Card | c in game.turn.cards and (c.color = game.last_card.color or c.number = game.last_card.number)) implies {
-        game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
-    }
 
-pred winStrategy(LoosingPlayer): 
-    // guaranteed loose/win
-    no c: Card | c in LoosingPlayer.cards and (c = skip or c = reverse or c = +2  or c = +4)
+// pred winStrategy(LoosingPlayer): 
+//     // guaranteed loose/win
+//     no c: Card | c in LoosingPlayer.cards and (c = skip or c = reverse or c = +2  or c = +4)
 
 
-Win condition: If a player runs out cards after their turn, they win, and game ends
+// Win condition: If a player runs out cards after their turn, they win, and game ends
 
 
+// General rules:
+// Starting player can play any card, succeeding players should match the previous symbol or color.
 
-General rules:
-Starting player can play any card, succeeding players should match the previous number or color.
 
-
-If a player plays a skip card, the next player doesn’t play. The skip card must match the previous player’s card number or color.
-If a player plays a reverse card, the previous player has to play again. The reverse card must match the previous player’s card number or color.
-If a player plays +2 card, the next player has to draw two cards, and doesn’t play. The +2 card must match the previous player’s card number or color.
-If a player plays +4 card, the next player has to draw four cards. This can be played at any point in the game
-If a player plays the wild card, they get to choose the color they want the next cards to be. This can also be played at any point in the game.
+// If a player plays a skip card, the next player doesn’t play. The skip card must match the previous player’s card symbol or color.
+// If a player plays a reverse card, the previous player has to play again. The reverse card must match the previous player’s card symbol or color.
+// If a player plays +2 card, the next player has to draw two cards, and doesn’t play. The +2 card must match the previous player’s card symbol or color.
+// If a player plays +4 card, the next player has to draw four cards. This can be played at any point in the game
+// If a player plays the wild card, they get to choose the color they want the next cards to be. This can also be played at any point in the game.
