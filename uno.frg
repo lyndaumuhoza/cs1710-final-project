@@ -18,6 +18,9 @@ abstract sig Player {
     var cards: set Card
 }
 one sig Player1, Player2 extends Player {}
+one sig Winner {
+    winner: one Player
+}
 
 
 inst optimizer {
@@ -30,11 +33,11 @@ inst optimizer {
     Black = `Black
     Color = `Blue + `Green + Black
 
-    color = `ZeroBlue -> `Blue + `OneBlue -> `Blue + `TwoBlue -> `Blue + `ThreeBlue -> `Blue + `FourBlue -> `Blue + `FiveBlue -> `Blue + `Skipblue -> `Blue + `ReverseBlue -> `Blue + `PlusTwoBlue -> `Blue + 
+    color = `ZeroBlue -> `Blue + `OneBlue -> `Blue + `TwoBlue -> `Blue + `ThreeBlue -> `Blue + `FourBlue -> `Blue + `FiveBlue -> `Blue + `SkipBlue -> `Blue + `ReverseBlue -> `Blue + `PlusTwoBlue -> `Blue + 
     `ZeroGreen -> `Green + `OneGreen -> `Green + `TwoGreen -> `Green + `ThreeGreen -> `Green + `FourGreen -> `Green + `FiveGreen -> `Green + `SkipGreen -> `Green + `ReverseGreen -> `Green + `PlusTwoGreen-> `Green + 
     `PlusFour -> `Black + `WildCard -> `Black
 
-    symbol = `ZeroBlue -> 0 + `OneBlue -> 1 + `TwoBlue -> 1 + `ThreeBlue -> 3 + `FourBlue -> 4 + `FiveBlue -> 5 + `Skipblue -> -1 + `ReverseBlue -> -3 + `PlusTwoBlue -> -2 + 
+    symbol = `ZeroBlue -> 0 + `OneBlue -> 1 + `TwoBlue -> 1 + `ThreeBlue -> 3 + `FourBlue -> 4 + `FiveBlue -> 5 + `SkipBlue -> -1 + `ReverseBlue -> -3 + `PlusTwoBlue -> -2 + 
     `ZeroGreen -> 0 + `OneGreen -> 1 + `TwoGreen -> 1 + `ThreeGreen -> 3 + `FourGreen -> 4 + `FiveGreen -> 5 + `SkipGreen -> -1 + `ReverseGreen  -> -3 + `PlusTwoGreen-> -2 + 
     `PlusFour -> -4 + `WildCard -> -5
 }
@@ -71,6 +74,7 @@ pred playCard {
     Game.turn.cards = Game.turn.cards' - Game.last_card'
     all p: Player | p != Game.turn implies p.cards = p.cards'
     Deck.all_cards = Deck.all_cards'
+    Game.turn' != Game.turn
 }
 
 pred specialCardRules {
@@ -78,26 +82,29 @@ pred specialCardRules {
     // if game.last_card = +2 implies draw(game.turn) or 
     // if game.last_card = wild implies game.last_card.color != game.last_card.color')
     (Game.last_card.symbol = -1 or Game.last_card.symbol = -3) implies Game.turn = Game.turn'
-    (Game.last_card.symbol = -2) implies drawCard[Game.turn, 2]
+    (Game.last_card.symbol = -2) implies drawCardNoPlay
     (Game.last_card.symbol = -5 or Game.last_card.symbol = -4) implies Game.last_card.color != Game.last_card'.color
-    (Game.last_card.symbol = -4) implies drawCard[Game.turn, 4]
+    (Game.last_card.symbol = -4) implies drawCardNoPlay[Game.turn, 4]
 }
 
 pred noMatchMustDraw {
     no c: Card | c in Game.turn.cards and (c.color = Game.last_card.color or c.symbol = Game.last_card.symbol)
 }
 
-pred drawCard {
-    // if game.last_card = +2 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
-    // f game.last_card = +4 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
-
+pred drawCardPlay {
     noMatchMustDraw implies {
         some c: Card | {
             c in Deck.all_cards
-            Game.turn.cards' = Game.turn.cards + c
             Deck.all_cards' = Deck.all_cards - c
+            (Game.last_card.symbol = c.symbol or Game.last_card.color = c.color) => Game.last_card' = c else {Game.turn.cards' = Game.turn.cards + c}
+            Game.turn' != Game.turn
         }
+        
     }
+}
+pred drawCardNoPlay {
+    // if game.last_card = +2 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
+    // f game.last_card = +4 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
     Game.last_card.symbol = -2  {
         some disj c1, c2: Card | {
             c1 in Deck.all_cards and c2 in Deck.all_cards
@@ -112,11 +119,18 @@ pred drawCard {
             Deck.all_cards' = Deck.all_cards - c1 - c2 - c3 - c4       
         }
     }
+    // all other players keep their cards
     Game.last_card = Game.last_card'
     all other: Player | other != Game.turn implies other.cards = other.cards'
+    Game.turn' != Game.turn
 }
 
-run {init and always wellformed and (drawCard or playCard)} for exactly 20 Card, 2 Player for optimizer
+pred winScenario {
+    ((#{Player1.cards} = 0)implies Winner.winner = Player1) or ((#{Player2.cards} = 0) implies Winner.winner = Player2)
+}
+
+
+run {init and always wellformed and always (drawCardPlay or drawCardNoPlay or playCard)} for exactly 20 Card, 2 Player for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 
