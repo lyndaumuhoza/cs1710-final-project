@@ -116,7 +116,7 @@ pred drawCard {
     all other: Player | other != Game.turn implies other.cards = other.cards'
 }
 
-run {init and always wellformed and (drawCard or playCard)} for exactly 20 Card, 2 Player
+run {init and always wellformed and (drawCard or playCard)} for exactly 20 Card, 2 Player for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 
