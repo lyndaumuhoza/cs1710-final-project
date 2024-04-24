@@ -70,11 +70,14 @@ pred wellformed {
 // Rules:
 // Predicates for rules:
 pred playCard {
-    Game.last_card.symbol = Game.last_card'.symbol or Game.last_card.color = Game.last_card'.color
-    Game.turn.cards = Game.turn.cards' - Game.last_card'
+    Game.last_card'.symbol = Game.last_card.symbol or Game.last_card'.color = Game.last_card.color
+    Game.turn.cards' = Game.turn.cards - Game.last_card'
     all p: Player | p != Game.turn implies p.cards = p.cards'
-    Deck.all_cards = Deck.all_cards'
-    Game.turn' != Game.turn
+    Deck.all_cards' = Deck.all_cards
+    // Game.turn' != Game.turn
+    (Game.turn = Player2) implies (Game.turn' = Player1)
+    (Game.turn = Player1) implies (Game.turn' = Player2)
+
 }
 
 pred specialCardRules {
@@ -84,7 +87,7 @@ pred specialCardRules {
     (Game.last_card.symbol = -1 or Game.last_card.symbol = -3) implies Game.turn = Game.turn'
     (Game.last_card.symbol = -2) implies drawCardNoPlay
     (Game.last_card.symbol = -5 or Game.last_card.symbol = -4) implies Game.last_card.color != Game.last_card'.color
-    (Game.last_card.symbol = -4) implies drawCardNoPlay[Game.turn, 4]
+    (Game.last_card.symbol = -4) implies drawCardNoPlay
 }
 
 pred noMatchMustDraw {
@@ -98,6 +101,7 @@ pred drawCardPlay {
             Deck.all_cards' = Deck.all_cards - c
             (Game.last_card.symbol = c.symbol or Game.last_card.color = c.color) => Game.last_card' = c else {Game.turn.cards' = Game.turn.cards + c}
             Game.turn' != Game.turn
+            all other: Player | other != Game.turn implies other.cards = other.cards'
         }
         
     }
@@ -130,7 +134,7 @@ pred winScenario {
 }
 
 
-run {init and always wellformed and always (drawCardPlay or drawCardNoPlay or playCard)} for exactly 20 Card, 2 Player for optimizer
+run {init and always wellformed and always(drawCardPlay or drawCardNoPlay or playCard) and always specialCardRules and eventually winScenario } for exactly 20 Card, 2 Player for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 
