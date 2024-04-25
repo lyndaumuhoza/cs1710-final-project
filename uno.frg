@@ -3,7 +3,7 @@
 // Start with 2 players
 // Cards: (6 symbol cards +3 special cards per color + 2 wild types) x 4 = 44
 
-option max_tracelength 12
+option max_tracelength 13
 option min_tracelength 12
 
 abstract sig Color {}
@@ -64,15 +64,18 @@ pred init {
 
 pred wellformed {
     // no overlap between hands / deck
-    #{Player1.cards & Player2.cards & Deck.all_cards} = 0
+    #{Player1.cards & Player2.cards} = 0
+    #{Player2.cards & Deck.all_cards} = 0
+    #{Player1.cards & Deck.all_cards} = 0
 }
 
 // Rules:
 // Predicates for rules:
 pred playCard {
-    Game.last_card'.symbol = Game.last_card.symbol or Game.last_card'.color = Game.last_card.color
+    Game.last_card'.symbol = Game.last_card.symbol or Game.last_card'.color = Game.last_card.color or Game.last_card'.symbol = -4 or Game.last_card'.symbol = -5
     Game.turn.cards' = Game.turn.cards - Game.last_card'
-    all p: Player | p != Game.turn implies p.cards = p.cards'
+    Game.turn = Player2 implies Player1.cards = Player1.cards'
+    Game.turn = Player1 implies Player2.cards = Player2.cards'
     Deck.all_cards' = Deck.all_cards
     // Game.turn' != Game.turn
     (Game.turn = Player2) implies (Game.turn' = Player1)
@@ -95,15 +98,14 @@ pred noMatchMustDraw {
 }
 
 pred drawCardPlay {
-    noMatchMustDraw implies {
-        some c: Card | {
-            c in Deck.all_cards
-            Deck.all_cards' = Deck.all_cards - c
-            (Game.last_card.symbol = c.symbol or Game.last_card.color = c.color) => Game.last_card' = c else {Game.turn.cards' = Game.turn.cards + c}
-            Game.turn' != Game.turn
-            all other: Player | other != Game.turn implies other.cards = other.cards'
-        }
-        
+    noMatchMustDraw 
+
+    some c: Card | {
+        c in Deck.all_cards
+        Deck.all_cards' = Deck.all_cards - c
+        (Game.last_card.symbol = c.symbol or Game.last_card.color = c.color) => Game.last_card' = c else {Game.turn.cards' = Game.turn.cards + c}
+        Game.turn' != Game.turn
+        all other: Player | other != Game.turn implies other.cards = other.cards'
     }
 }
 pred drawCardNoPlay {
@@ -130,11 +132,18 @@ pred drawCardNoPlay {
 }
 
 pred winScenario {
-    ((#{Player1.cards} = 0)implies Winner.winner = Player1) or ((#{Player2.cards} = 0) implies Winner.winner = Player2)
+    ((#{Player1.cards} = 0) and Winner.winner = Player1) or ((#{Player2.cards} = 0) and Winner.winner = Player2)
 }
 
+pred trace {
+    init
+    always wellformed
+    always {drawCardPlay or drawCardNoPlay or playCard}
+    always specialCardRules
+    eventually winScenario
+}
 
-run {init and always wellformed and always(drawCardPlay or drawCardNoPlay or playCard) and always specialCardRules and eventually winScenario } for exactly 20 Card, 2 Player for optimizer
+run {init and always wellformed and always(playCard) and always specialCardRules } for exactly 20 Card, 2 Player for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 
