@@ -57,9 +57,9 @@ pred init {
     // start with player 1 already putting something down, so it's player 2's turn
 
     Game.turn = Player2
-    #{Player1.cards} = 6
-    #{Player2.cards} = 7
-    #{Deck.all_cards} = 7
+    #{Player1.cards} = 4
+    #{Player2.cards} = 5
+    #{Deck.all_cards} = 11
 }
 
 pred wellformed {
@@ -111,7 +111,7 @@ pred drawCardPlay {
 pred drawCardNoPlay {
     // if game.last_card = +2 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
     // f game.last_card = +4 implies game.turn.cards' = game.turn.cards + some Card in Deck and game.turn' = game.turn
-    Game.last_card.symbol = -2  {
+    Game.last_card.symbol = -2  implies {
         some disj c1, c2: Card | {
             c1 in Deck.all_cards and c2 in Deck.all_cards
             Game.turn.cards' = Game.turn.cards + c1 + c2
@@ -127,7 +127,8 @@ pred drawCardNoPlay {
     }
     // all other players keep their cards
     Game.last_card = Game.last_card'
-    all other: Player | other != Game.turn implies other.cards = other.cards'
+    Game.turn = Player2 implies Player1.cards = Player1.cards'
+    Game.turn = Player1 implies Player2.cards = Player2.cards'
     Game.turn' != Game.turn
 }
 
@@ -143,7 +144,7 @@ pred trace {
     eventually winScenario
 }
 
-run {init and always wellformed and always(playCard) and always specialCardRules } for exactly 20 Card, 2 Player for optimizer
+run {init and always wellformed and always(playCard) and always specialCardRules } for exactly 20 Card, 2 Player, 6 Int for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 
