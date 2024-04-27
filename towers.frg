@@ -35,13 +35,13 @@ pred wellformed {
 
 pred move {
     //t1's top ring will be the next ring, t2's top ring will be t1's previous top ring
-    some disj t1, t2, t3: Tower | {
-        some t1.top
-        t2.top' = t1.top
-        t2.top'.below = t2.top
-        t1.top' = t1.top.below 
+    some disj t1, t2, t3: Tower, r1: Ring {
+        t1.top = r1
+        t2.top' = r1
+        r1.below' = t2.top
+        t1.top' = r1.below 
         t3.top' = t3.top
-        all r: Ring | r != t1.top implies r.below' = r.below // all other rings stay the same
+        all r: Ring | r != r1 implies r.below' = r.below // all other rings stay the same
     }
     
 }
@@ -60,4 +60,4 @@ test expect {
     moveSat: {always move} is sat 
     endSat: {eventually endState} is sat
 }
-run {init and always move} for exactly 3 Ring
+run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower
