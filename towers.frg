@@ -20,7 +20,7 @@ one sig Counter {
 }
 
 pred init {
-    // linearity
+    // enforcing linearity
     Ring1.below = Ring2
     Ring2.below = Ring3
     no Ring3.below 
@@ -30,7 +30,7 @@ pred init {
 }
 
 pred wellformed {
-    all r: Ring | r.below != r
+    all r: Ring | r.below != r 
     Ring2.below != Ring1
     Ring3.below != Ring1 and Ring3.below != Ring2
 }
@@ -70,6 +70,7 @@ test expect {
 }
 
 test expect {
+    // total number of moves sould be 7, 2^n-1, where n = 3 
     numberOfMoves: {totalMoves and Counter.counter = 7} is sat
 }
 run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower
