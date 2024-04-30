@@ -50,6 +50,10 @@ pred endState {
     all t: Tower | (t != EndingTower) implies no t.top
 }
 
+pred trace {
+    init and always wellformed and always move and eventually endState
+}
+
 // test expect {
 //     initSat: {init} is sat
 //     wellformedSat: {always wellformed} is sat

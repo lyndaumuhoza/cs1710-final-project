@@ -61,6 +61,13 @@ pred endState {
     EndingTower.top = Ring1
 }
 
+pred trace {
+    init
+    always wellformed
+    always move
+    eventually endState
+}
+
 
 test expect {
     initSat: {init} is sat
