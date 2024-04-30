@@ -12,7 +12,11 @@ In addition, we wanted to explore several variations of this puzzle and see how 
 
 ### <Model 2 Section>
 
+Bicolor towers
+
 ### <Model 3 Section>
+
+Magnetic towers 
 
 ## Goals
 
@@ -30,6 +34,7 @@ Some other questions/properties we looked at:
 ## Overview of Sigs and Predicates
 
 ## Testing
+
 
 ## Assumptions and Limitations
 

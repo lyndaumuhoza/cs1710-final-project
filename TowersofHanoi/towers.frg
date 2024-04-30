@@ -80,4 +80,5 @@ test expect {
     // total number of moves sould be 7, 2^n-1, where n = 3 
     numberOfMoves: {totalMoves and Counter.counter = 7} is sat
 }
+
 run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower

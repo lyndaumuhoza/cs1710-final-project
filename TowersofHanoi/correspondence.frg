@@ -12,3 +12,4 @@ test expect {
       trace and trace2 and not always correspondence 
     } for exactly 3 Ring, exactly 2 StartingTower, 2 BasicTower, 2 EndingTower is unsat
 }
+
