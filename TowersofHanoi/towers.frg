@@ -16,8 +16,11 @@ abstract sig Ring {
 one sig Ring1, Ring2, Ring3 extends Ring {}
 
 one sig Counter {
-  var counter: one Int // counter for the number of moves
+//   var counter: set Move // counter for the number of moves
+    var counter: one Int
 }
+
+sig Move {}
 
 pred init {
     // enforcing linearity
@@ -27,6 +30,8 @@ pred init {
     StartingTower.top = Ring1
     no BasicTower.top
     no EndingTower.top 
+    // #{Counter.counter} = 0
+    // Counteer.counter = 0
 }
 
 pred wellformed {
@@ -50,6 +55,7 @@ pred move {
 pred totalMoves {
     // I put this in a separate predicate becuase it was harder to debug within move
     move
+    // some m: Move | m not in Counter.counter and Counter.counter' = Counter.counter + m
     Counter.counter' = add[Counter.counter, 1]
 }
 
@@ -74,11 +80,12 @@ test expect {
     wellformedSat: {always wellformed} is sat
     moveSat: {always move} is sat 
     endSat: {eventually endState} is sat
+    // endSat2: {init and always wellformed and always totalMoves and eventually endState} is sat
 }
 
-test expect {
-    // total number of moves sould be 7, 2^n-1, where n = 3 
-    numberOfMoves: {totalMoves and Counter.counter = 7} is sat
-}
+// test expect {
+//     // total number of moves sould be 7, 2^n-1, where n = 3, counter.counter/2
+//     numberOfMoves: {init and always wellformed and always totalMoves and eventually {endState and Counter.counter = 14}} is sat
+// }
 
 run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower

@@ -14,6 +14,14 @@ sig Ring {
     order: lone Ring
 }
 
+one sig Counter {
+  var counter: one Int // counter for the number of moves
+}
+
+pred numRings[i: Int] {
+    #{Ring} = i
+}
+
 pred initialOrder {
     StartingTower.top->(Ring - StartingTower.top) in ^order
     not {some iden & ^order}
@@ -25,6 +33,7 @@ pred init {
     initialOrder
     some StartingTower.top
     all t: Tower | (t != StartingTower) implies no t.top
+    Counter.counter = 0
 }
 
 pred wellformed {
@@ -38,10 +47,16 @@ pred move {
         t2.top' = r1
         r1.below' = t2.top
         t1.top' = r1.below 
-        r1 -> r1.below' in ^order
+        some r1.below' implies r1 -> r1.below' in ^order
         all t: Tower | (t != t1 and t != t2) implies t.top' = t.top
         all r: Ring | r != r1 implies r.below' = r.below // all other rings stay the same
     }
+}
+
+pred totalMoves {
+    // I put this in a separate predicate becuase it was harder to debug within move
+    move
+    Counter.counter' = add[Counter.counter, 2]
 }
 
 pred endState {
@@ -66,4 +81,4 @@ pred traceNotWell {
 //     moveSat: {always move} is sat 
 //     endSat: {eventually endState} is sat
 // }
-run {init and always wellformed and always move and eventually endState} for exactly 4 Ring, 3 Tower
+run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower, 5 Int

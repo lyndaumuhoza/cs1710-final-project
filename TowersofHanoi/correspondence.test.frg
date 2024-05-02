@@ -1,9 +1,11 @@
 #lang forge/temporal
 
-open "towersv2.frg"
+open "towersGeneric.frg"
 open "magneticGeneric.frg"
 
-pred BMcorrespondence {
+// Checks for correspondence between a move in the basic towers of hanoi simultaneously with the magnetic variation
+// The two versions correspond when the number of rings on each tower are the same (a ring is moved)
+pred BMCorrespondence {
     #{EndingTower.top->(Ring - EndingTower.top)} =  #{MEndingTower.Mtop->(MRing - MEndingTower.Mtop)}
     #{StartingTower.top->(Ring - StartingTower.top)} =  #{MStartingTower.Mtop->(MRing - MStartingTower.Mtop)}
     all t: Tower | (t != StartingTower and t != EndingTower) implies {
@@ -12,6 +14,7 @@ pred BMcorrespondence {
 }
 
 test expect {
+  // if wellformed for magnetic is sat, then wellformed for basic towers is also sat, but th reverse is not true  
     basicMagneticCorres: {
       (traceNotWell and Mtrace and BMcorrespondence) implies always wellformed
     } for exactly 3 Ring, exactly 3 MRing, exactly 3 Tower, exactly 3 MTower is theorem

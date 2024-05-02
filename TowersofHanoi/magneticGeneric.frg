@@ -61,7 +61,7 @@ pred Mmove {
         t1.Mtop' = r1.Mbelow 
         some r1.Mbelow' implies {
             r1 -> r1.Mbelow' in ^Morder
-            r1.pole = r1.Mbelow'.pole
+            r1.pole' = r1.Mbelow'.pole
         }
         all t:MTower | (t != t1 and t != t2) implies t.Mtop' = t.Mtop
         all r: MRing | r != r1 implies { 
@@ -86,4 +86,4 @@ pred MtraceNotWell {
     Minit and always Mmove and eventually MendState 
 }
 
-run {Mtrace} for exactly 3 MRing, 4 MTower
+run {Mtrace} for exactly 3 MRing, 3 MTower
