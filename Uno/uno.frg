@@ -49,9 +49,9 @@ one sig Game {
     var turn: one Player,
     var last_card: one Card
 }
-one sig Deck { 
-    var all_cards: set Card
-}
+// one sig Deck { 
+//     var all_cards: set Card
+// }
 
 pred init {
     // start with player 1 already putting something down, so it's player 2's turn
@@ -59,24 +59,32 @@ pred init {
     Game.turn = Player2
     #{Player1.cards} = 4
     #{Player2.cards} = 5
-    #{Deck.all_cards} = 11
+    // #{Deck.all_cards} = 11
 }
 
 pred wellformed {
     // no overlap between hands / deck
     #{Player1.cards & Player2.cards} = 0
-    #{Player2.cards & Deck.all_cards} = 0
-    #{Player1.cards & Deck.all_cards} = 0
+    Game.last_card not in Player1.cards
+    Game.last_card not in Player2.cards
+    // #{Player2.cards & Deck.all_cards} = 0
+    // #{Player1.cards & Deck.all_cards} = 0
 }
 
 // Rules:
 // Predicates for rules:
 pred playCard {
-    Game.last_card'.symbol = Game.last_card.symbol or Game.last_card'.color = Game.last_card.color or Game.last_card'.symbol = -4 or Game.last_card'.symbol = -5
-    Game.turn.cards' = Game.turn.cards - Game.last_card'
+    // Game.last_card'.symbol = Game.last_card.symbol or Game.last_card'.color = Game.last_card.color or Game.last_card'.symbol = -4 or Game.last_card'.symbol = -5
+    some p: Player, c: Card | {
+        c in p.cards
+        Game.turn = p
+        p.cards' = p.cards - c
+        Game.last_card' = c
+        c.color = Game.last_card.color or c.symbol = Game.last_card.symbol or c.symbol = -4 or c.symbol = -5
+    }
     Game.turn = Player2 implies Player1.cards = Player1.cards'
     Game.turn = Player1 implies Player2.cards = Player2.cards'
-    Deck.all_cards' = Deck.all_cards
+    // Deck.all_cards' = Deck.all_cards
     // Game.turn' != Game.turn
     (Game.turn = Player2) implies (Game.turn' = Player1)
     (Game.turn = Player1) implies (Game.turn' = Player2)
@@ -144,7 +152,7 @@ pred trace {
     eventually winScenario
 }
 
-run {init and always wellformed and always(playCard) and always specialCardRules } for exactly 20 Card, 2 Player, 6 Int for optimizer
+run {init and always(playCard) and eventually winScenario} for exactly 20 Card, 2 Player for optimizer
                    
 
 // pred winStrategy(LoosingPlayer): 

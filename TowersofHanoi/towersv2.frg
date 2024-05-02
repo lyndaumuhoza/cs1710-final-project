@@ -17,6 +17,7 @@ sig Ring {
 pred initialOrder {
     StartingTower.top->(Ring - StartingTower.top) in ^order
     not {some iden & ^order}
+    ^below in ^order
 }
 
 pred init {
@@ -27,8 +28,6 @@ pred init {
 }
 
 pred wellformed {
-    // no cycles
-    not {some iden & ^below}
     // below must always follow the same sequence set by order
     {^below in ^order}
 }
@@ -39,6 +38,7 @@ pred move {
         t2.top' = r1
         r1.below' = t2.top
         t1.top' = r1.below 
+        r1 -> r1.below' in ^order
         all t: Tower | (t != t1 and t != t2) implies t.top' = t.top
         all r: Ring | r != r1 implies r.below' = r.below // all other rings stay the same
     }
@@ -52,6 +52,12 @@ pred endState {
 
 pred trace {
     init and always wellformed and always move and eventually endState
+}
+
+pred traceNotWell {
+    init
+    always move
+    eventually endState
 }
 
 // test expect {

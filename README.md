@@ -8,15 +8,17 @@ Initially, we proposed modeling the card game, Uno. We thought about modeling a 
 
 We changed our project idea to the Towers of Hanoi. This is a puzzle in which there are multiple pegs/towers, and a stack of various sized rings on one tower. The goal is to get all rings to a different tower, moving one ring at a time and ensuring that a larger ring is never placed on top of a smaller ring.
 
-In addition, we wanted to explore several variations of this puzzle and see how they compared. The variations are \***\*\_\*\***. We chose this idea because we were introduced to this puzzle to learn recursion for the first time, so we thought it would be interesting to explore other properties that it may be useful in demonstrating.
+In addition, we wanted to explore several variations of this puzzle and see how they compared. The variations are colored towers and magnetic towers. We chose this idea because we were introduced to this puzzle to learn recursion for the first time, so we thought it would be interesting to explore other properties that it may be useful in demonstrating.
 
-### <Model 2 Section>
+### Bicolor towers
 
-Bicolor towers
+In this variation of the Towers of Hanoi, each ring has one of two colors. The initial tower starts with the rings alternating in color. The goal is to get all rings to another tower without allowing two rings of the same color to be stacked. The basic size contstraint of the original puzzle applies here as well.
 
-### <Model 3 Section>
+### Magnetic towers
 
-Magnetic towers 
+In this variation of the Towers of Hanoi, each ring has magnetic poles, with either the North side facing up or the South side facing up. The initial tower starts with all rings facing in the same direction. Everytime a ring is moved, the ring must be flipped. The goal is to get all the rings to another tower without allowing two rings to have the same pole facing each other (as this would prepel the rings). The basic size constraint still applies here as well.
+
+## How to Interpret Our Model
 
 ## Goals
 
@@ -32,6 +34,12 @@ Some other questions/properties we looked at:
 ## Design Choices and Tradeoffs
 
 ## Overview of Sigs and Predicates
+
+Although we worked with a lot of model variations, the main Sigs are for Ring and Tower, and the baisc predicates are init, move, wellformed, and endState, which are all needed to run a successful trace from start to end. 
+
+In the basic model, Ring has the below field to keep track of which ring it is stacked on. Tower has a top field to keep track of the top ring in its stack. In the magnetic variation, Ring has a polarity field to keep track of which pols is faced up, and Tower also has a polarity field which restrics which state of rings can be stacked on it. In the colored variation, Ring has an additional color property but Tower stays the same as the basic model.
+
+Init specifies the state of the starting tower. Wellformed ensures that no rings are stacked on smaller rings (along with other constraints for the other variations). Move specifies the action of moving one ring, and ensuring all other rings remain in place. End state specifies the state of the ending tower. 
 
 ## Testing
 
