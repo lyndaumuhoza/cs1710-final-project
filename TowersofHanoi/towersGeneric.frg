@@ -24,6 +24,7 @@ pred numRings[i: Int] {
 
 pred initialOrder {
     StartingTower.top->(Ring - StartingTower.top) in ^order
+    StartingTower.top->(Ring - StartingTower.top) in ^below
     not {some iden & ^order}
     ^below in ^order
 }
@@ -53,10 +54,16 @@ pred move {
     }
 }
 
+pred doNothing {
+    Counter.counter' = Counter.counter
+    all r: Ring | r.below' = r.below
+    all t: Tower | t.top' = t.top
+}
+
 pred totalMoves {
     // I put this in a separate predicate becuase it was harder to debug within move
     move
-    Counter.counter' = add[Counter.counter, 2]
+    Counter.counter' = add[Counter.counter, 1]
 }
 
 pred endState {
@@ -81,4 +88,4 @@ pred traceNotWell {
 //     moveSat: {always move} is sat 
 //     endSat: {eventually endState} is sat
 // }
-run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower, 5 Int
+run {init and always wellformed and always {totalMoves or doNothing} and eventually endState} for exactly 4 Ring, 3 Tower, 6 Int
