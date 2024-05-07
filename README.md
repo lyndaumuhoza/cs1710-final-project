@@ -41,7 +41,28 @@ In the basic model, Ring has the below field to keep track of which ring it is s
 
 Init specifies the state of the starting tower. Wellformed ensures that no rings are stacked on smaller rings (along with other constraints for the other variations). Move specifies the action of moving one ring, and ensuring all other rings remain in place. End state specifies the state of the ending tower. 
 
+## Challenges
+
+Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. Solution: 
+
 ## Testing
+
+### Current Testing Plan
+- Test that min trace length for basic towers = 7, but is satisfiable in more steps (using counter)
+- Test that min trace length for magnetic towers = 13, but is satisfiable in more steps (using counter)
+- Test that min trace length for colored towers = 7, but is satisfiable in more steps (using counter)
+- Test that changing the number of towers to 2 makes the puzzle unsat for all three variations
+- Test that changing the number of towers to 4 decreases the minimum trace length for all three variations
+- Test to see if there is correspondence between the magnetic variation and the two colors (if given a trace that satisfies the magnetic constraints, will it always satisfy the colored version?)
+- Verify that both magnetic and colored variations correspond to basic version (expected, bc they are just extensions of original puzzle)
+- Verify that no disk will ever be placed on a disk smaller than it
+- Verify that in magnetic variation, all disks in a tower will have same polarity 
+- Verify that in colored variation, no two disks of the same color are placed on each other
+- Verify that init and endstate are equivalent for all variations
+- For each puzzle, verify the expected trace length for two disks + three towers, four disks + three towers (if not too long), etc
+- Verify that colored variation is unsat with four disks + three towers
+- Verify wellformed using induction
+- Basic unit testing for predicates
 
 
 ## Assumptions and Limitations
