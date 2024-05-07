@@ -35,19 +35,20 @@ Some other questions/properties we looked at:
 
 ## Overview of Sigs and Predicates
 
-Although we worked with a lot of model variations, the main Sigs are for Ring and Tower, and the baisc predicates are init, move, wellformed, and endState, which are all needed to run a successful trace from start to end. 
+Although we worked with a lot of model variations, the main Sigs are for Ring and Tower, and the baisc predicates are init, move, wellformed, and endState, which are all needed to run a successful trace from start to end.
 
 In the basic model, Ring has the below field to keep track of which ring it is stacked on. Tower has a top field to keep track of the top ring in its stack. In the magnetic variation, Ring has a polarity field to keep track of which pols is faced up, and Tower also has a polarity field which restrics which state of rings can be stacked on it. In the colored variation, Ring has an additional color property but Tower stays the same as the basic model.
 
-Init specifies the state of the starting tower. Wellformed ensures that no rings are stacked on smaller rings (along with other constraints for the other variations). Move specifies the action of moving one ring, and ensuring all other rings remain in place. End state specifies the state of the ending tower. 
+Init specifies the state of the starting tower. Wellformed ensures that no rings are stacked on smaller rings (along with other constraints for the other variations). Move specifies the action of moving one ring, and ensuring all other rings remain in place. End state specifies the state of the ending tower.
 
 ## Challenges
 
-Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. Solution: 
+Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. Solution: --- TIM'S SOLUTION
 
 ## Testing
 
 ### Current Testing Plan
+
 - Test that min trace length for basic towers = 7, but is satisfiable in more steps (using counter)
 - Test that min trace length for magnetic towers = 13, but is satisfiable in more steps (using counter)
 - Test that min trace length for colored towers = 7, but is satisfiable in more steps (using counter)
@@ -56,14 +57,13 @@ Tracking the trace lengths using a counter was difficult, we were running into a
 - Test to see if there is correspondence between the magnetic variation and the two colors (if given a trace that satisfies the magnetic constraints, will it always satisfy the colored version?)
 - Verify that both magnetic and colored variations correspond to basic version (expected, bc they are just extensions of original puzzle)
 - Verify that no disk will ever be placed on a disk smaller than it
-- Verify that in magnetic variation, all disks in a tower will have same polarity 
+- Verify that in magnetic variation, all disks in a tower will have same polarity
 - Verify that in colored variation, no two disks of the same color are placed on each other
 - Verify that init and endstate are equivalent for all variations
 - For each puzzle, verify the expected trace length for two disks + three towers, four disks + three towers (if not too long), etc
 - Verify that colored variation is unsat with four disks + three towers
 - Verify wellformed using induction
 - Basic unit testing for predicates
-
 
 ## Assumptions and Limitations
 
@@ -75,7 +75,8 @@ Tracking the trace lengths using a counter was difficult, we were running into a
 - Temporal forge: \
   Although we considered basic forge for this model, we ended up choosing temporal because it offers the option to limit trace length, which is especially helpful when considering that we generally know how long a trace should be. We also liked that it allows us to compare the traces at every step in time (so that there is no need to keep a separate State sig).
 
-- Visualizer?
+- Visualizer: \
+  We decided to use the default visualizer because we found that the graphs with the boxes and arrows were sufficient in visualizing the stack of rings for each tower. If we were to make a customized visualizer based on the ideal visualization, it would look similar to the default, but with some properties being more distinct (like color, or polarity). However, we found that when we display those proeprties as attributes (and they get written as a label), this explicit identification was easy to follow.
 
 ## Stakeholders
 
@@ -83,3 +84,6 @@ Tracking the trace lengths using a counter was difficult, we were running into a
 - Puzzle Players: Peeopl who are generally interested in puzzles may be interested because they can look at how the model solves the the puzzle, and compare different versions of the puzzle using this model
 
 ## Takeaways
+
+- We found that there is no correspondence between the magnetic twoers and bicolor towers (at least in the 3 disk, 3 tower case). This is because when a disk is flipped, its relationship to the disk immediately below is not guaranteed to be consistent the same way the bicolor towers is. For example, if the smallest disk in the magnetic towers is flipped, it no longer can be placed on the second smallest disk. However, this is not true with bicolors, as the smallest disk is always guaranteed to be able to stack on top of the one immediately below (since the colors are alternated).
+- We also verified that there is correspondence between the magnetic towers with the default towers, as well as the bicolor towers with the default towers. This was not as surprising because the bicolor towers are an extension of the default puzzle, with the additional restriction of not placing two similar colored disks. Similarly, the magnetic towers corresponding with the default was not surprising because the magnetic variation is extension of the default with the additional constraints of flipping the disks and preventing disks of opposite-facing polarity from stacking. Since both variations still require the disks to be ordered by size, there is a guarantee of correspondence.

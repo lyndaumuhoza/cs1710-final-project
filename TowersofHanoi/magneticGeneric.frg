@@ -23,6 +23,7 @@ sig MRing {
 
 pred MinitialOrder {
     MStartingTower.Mtop->(MRing - MStartingTower.Mtop) in ^Morder
+    MStartingTower.Mtop->(MRing - MStartingTower.Mtop) in ^Mbelow
     not {some iden & ^Morder}
     all r:MRing | r.pole = MStartingTower.tpole
     // no cycles
