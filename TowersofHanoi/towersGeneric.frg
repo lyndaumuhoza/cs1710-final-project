@@ -2,7 +2,7 @@
 
 
 option max_tracelength 20
-option min_tracelength 6
+option min_tracelength 1
 
 sig Tower {
     var top: lone Ring
@@ -73,12 +73,16 @@ pred endState {
 }
 
 pred trace {
+    init and always wellformed and always {totalMoves or doNothing} and eventually endState
+}
+
+pred traceNoCount { 
     init and always wellformed and always move and eventually endState
 }
 
 pred traceNotWell {
     init
-    always move
+    always {totalMoves or doNothing}
     eventually endState
 }
 
@@ -88,4 +92,4 @@ pred traceNotWell {
 //     moveSat: {always move} is sat 
 //     endSat: {eventually endState} is sat
 // }
-run {init and always wellformed and always {totalMoves or doNothing} and eventually endState} for exactly 4 Ring, 3 Tower, 6 Int
+run {trace} for exactly 4 Ring, 4 Tower
