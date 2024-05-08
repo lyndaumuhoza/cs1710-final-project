@@ -7,7 +7,7 @@ option min_tracelength 1
 sig Tower {
     var top: lone Ring
 }
-one sig StartingTower, EndingTower extends Tower{}
+one sig StartingTower, EndingTower, MidTower extends Tower{}
 
 sig Ring {
     var below: lone Ring, // order on stack valid if top ring is bigger
@@ -54,6 +54,17 @@ pred move {
     }
 }
 
+pred moveNotWell {
+    some disj t1, t2: Tower, r1: Ring {
+        t1.top = r1
+        t2.top' = r1
+        r1.below' = t2.top
+        t1.top' = r1.below 
+        all t: Tower | (t != t1 and t != t2) implies t.top' = t.top
+        all r: Ring | r != r1 implies r.below' = r.below // all other rings stay the same
+    }
+}
+
 pred doNothing {
     Counter.counter' = Counter.counter
     all r: Ring | r.below' = r.below
@@ -82,7 +93,7 @@ pred traceNoCount {
 
 pred traceNotWell {
     init
-    always {totalMoves or doNothing}
+    always move
     eventually endState
 }
 

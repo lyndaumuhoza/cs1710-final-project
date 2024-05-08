@@ -7,18 +7,13 @@ option min_tracelength 6
 abstract sig Tower {
     var top: lone Ring
 }
-one sig StartingTower, BasicTower, EndingTower extends Tower{}
+one sig StartingTower, MidTower, EndingTower extends Tower{}
 
 abstract sig Ring {
     var below: lone Ring // order on stack valid if top ring is bigger
 }
 
 one sig Ring1, Ring2, Ring3 extends Ring {}
-
-one sig Counter {
-//   var counter: set Move // counter for the number of moves
-    var counter: one Int
-}
 
 sig Move {}
 
@@ -28,10 +23,9 @@ pred init {
     Ring2.below = Ring3
     no Ring3.below 
     StartingTower.top = Ring1
-    no BasicTower.top
+    no MidTower.top
     no EndingTower.top 
-    // #{Counter.counter} = 0
-    // Counteer.counter = 0
+    wellformed
 }
 
 pred wellformed {
@@ -52,12 +46,6 @@ pred move {
     }    
 }
 
-pred totalMoves {
-    // I put this in a separate predicate becuase it was harder to debug within move
-    move
-    // some m: Move | m not in Counter.counter and Counter.counter' = Counter.counter + m
-    Counter.counter' = add[Counter.counter, 1]
-}
 
 pred endState {
     Ring1.below = Ring2
@@ -65,11 +53,18 @@ pred endState {
     no Ring3.below
     no StartingTower.top
     EndingTower.top = Ring1
+    no MidTower.top
 }
 
 pred trace {
     init
     always wellformed
+    always move
+    eventually endState
+}
+
+pred traceNotWell {
+    init
     always move
     eventually endState
 }

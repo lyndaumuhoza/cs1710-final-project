@@ -1,6 +1,6 @@
 #lang forge/temporal
 
-option max_tracelength 20
+option max_tracelength 14
 option min_tracelength 6
 
 // MAGNETIC 
@@ -12,7 +12,7 @@ sig MTower {
     tpole: one Polarity
 }
 
-one sig MStartingTower, MEndingTower extends MTower{}
+one sig MStartingTower, MEndingTower, MMidTower extends MTower{}
 
 
 sig MRing {
@@ -73,6 +73,21 @@ pred Mmove {
     }
 }
 
+pred MmoveNotWell {
+    some disj t1, t2:MTower, r1:MRing {
+        t1.Mtop = r1
+        t2.Mtop' = r1
+        r1.Mbelow' = t2.Mtop
+        t1.Mtop' = r1.Mbelow 
+        all t:MTower | (t != t1 and t != t2) implies t.Mtop' = t.Mtop
+        all r: MRing | r != r1 implies { 
+            r.Mbelow' = r.Mbelow // all other rings stay the same
+            r.pole' = r.pole
+        }
+        r1.pole' != r1.pole
+    }
+}
+
 pred MendState {
     MEndingTower.Mtop->(MRing - MEndingTower.Mtop) in ^Mbelow
     some MEndingTower.Mtop
@@ -84,7 +99,7 @@ pred Mtrace {
 }
 
 pred MtraceNotWell {
-    Minit and always Mmove and eventually MendState 
+    Minit and always MmoveNotWell and eventually MendState 
 }
 
 run {Mtrace} for exactly 3 MRing, 3 MTower

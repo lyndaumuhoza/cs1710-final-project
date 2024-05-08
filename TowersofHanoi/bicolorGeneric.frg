@@ -69,6 +69,19 @@ pred Bmove {
     }
 }
 
+pred BmoveNotWell {
+    some disj t1, t2:BTower, r1:BRing {
+        t1.Btop = r1
+        t2.Btop' = r1
+        r1.Bbelow' = t2.Btop
+        t1.Btop' = r1.Bbelow 
+        all t:BTower | (t != t1 and t != t2) implies t.Btop' = t.Btop
+        all r: BRing | r != r1 implies { 
+            r.Bbelow' = r.Bbelow // all other rings stay the same
+        }
+    }
+}
+
 pred BendState {
     BEndingTower.Btop->(BRing - BEndingTower.Btop) in ^Bbelow
     some BEndingTower.Btop
@@ -80,7 +93,7 @@ pred Btrace {
 }
 
 pred BtraceNotWell {
-    Binit and always Bmove and eventually BendState 
+    Binit and always BmoveNotWell and eventually BendState 
 }
 
 run {Btrace} for exactly 3 BRing, 3 BTower
