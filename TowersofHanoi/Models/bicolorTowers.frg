@@ -12,7 +12,7 @@ one sig BStartingTower, BMidTower, BEndingTower extends BTower{}
 abstract sig BRing {
     var Bbelow: lone BRing, // order on stack valid if Btop BRing is bigger
     // specifying start color
-    var col: one Color
+    col: one Color
 }
 
 abstract sig Color {}
@@ -59,7 +59,6 @@ pred Bmove {
         all r: BRing | {
             r != r1 implies {
                 r.Bbelow' = r.Bbelow // all other rings stay the same
-                r.col' = r.col
             }
         }
     }    

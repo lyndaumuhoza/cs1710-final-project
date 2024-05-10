@@ -407,15 +407,6 @@ pred counterChangesProperly {
         }
     }
 }
-pred traceLessThan7 {
-    always Counter.counter < 7
-}
-pred traceLessThan5 {
-    always Counter.counter < 5
-}
-pred traceLessThan3 {
-    always Counter.counter < 3
-}
 pred minTowers2 {
     #{Tower} < 2
     #{Ring} > 1
@@ -450,6 +441,20 @@ pred smallestRingMovedEveryOtherTime {
     }
     }
 }
+pred firstRingOnTopofThird {
+    eventually {
+        some disj r1, r2, r3: Ring | {
+            r1.order = r2
+            r2.order = r3
+            r1.below = r3
+        }
+    }
+}
+pred ringsSpreadOut {
+    eventually {
+        some disj r1, r2, r3: Ring | no r1.below and no r2.below and no r3.below
+    }
+}
 
 test suite for trace {
     assert orderAlwaysPreserved is necessary for trace
@@ -463,18 +468,22 @@ test suite for trace {
     test expect {
         // too many tops change (meaning more than one ring is moved)
         tooManyTowersTopChange: {tooManyTowersChange and trace} is unsat
-        // minimum number of moves for 2 rings is 3
-        minTraceTwoRings: {trace and traceLessThan3} for exactly 2 Ring, 3 Tower is unsat
-        twoRingTrace3Min: {trace and eventually Counter.counter = 3} for exactly 2 Ring, 3 Tower is sat
+        // can't solve puzzle in less than 3 moves
+        minTraceTwoRings: {trace and always Counter.counter < 3} for exactly 2 Ring, 3 Tower is unsat
+        // can solve puzzle in 3 moves
+        twoRingTrace3Min: {trace and always Counter.counter < 4} for exactly 2 Ring, 3 Tower is sat
         // minimum number of towers needed for puzzle is 2
         minTowersTwo: {trace and minTowers2} is unsat
-        
+        // possible to stack first ring on third
+        firstOnThird: {trace and firstRingOnTopofThird} is sat
+        // possible that all rings are spread out
+        ringsSpreadOutSat: {trace and ringsSpreadOut} is sat
 
-        // tests that take a long time to run (but can verify with a run statement):
+        // tests that take a long time to run (Alternatively, can verify with a run statement in model file):
         // minimum number of moves for 3 rings, 3 towers is 7
-        // minTraceThreeRings: {trace and traceLessThan7} for exactly 3 Ring, 3 Tower is unsat
+        // minTraceThreeRings: {trace and always Counter.counter < 7} for exactly 3 Ring, 3 Tower is unsat
         // // minimum number of moves for 3 rings, 4 towers is 5
-        // minTraceThreeRingsFourTowers: {trace and traceLessThan5} for exactly 3 Ring, 4 Tower is unsat
+        // minTraceThreeRingsFourTowers: {trace and always Counter.counter < 5} for exactly 3 Ring, 4 Tower is unsat
         //minimum number of moves for 4 rings, 4 towers is 9
         // minTraceFourRingsFourTowers: {trace and traceLessThan5} for exactly 3 Ring, 4 Tower is unsat
     }

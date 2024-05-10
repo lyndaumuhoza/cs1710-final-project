@@ -1,8 +1,7 @@
 #lang forge/temporal
 
-
 option max_tracelength 13
-option min_tracelength 6
+option min_tracelength 1
 
 abstract sig Tower {
     var top: lone Ring
