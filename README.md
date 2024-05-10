@@ -105,8 +105,7 @@ We defined correspondence as there always being the same number of rings per tow
 - Verify that in magnetic variation, all disks in a tower will have same polarity
 - Verify that in bicolored variation, no two disks of the same color are placed on each other
 - Verify that init and endstate are equivalent for all variations
-- For each puzzle, verify the expected trace length for two disks + three towers, four disks + three towers (if not too long), etc
-- Verify that colored variation is unsat with four disks + three towers
+- For each puzzle, verify the expected trace length for two disks + three towers, four disks + three towers, etc
 - Verify all are guaranteed to be wellformed
 - Basic unit testing for predicates
 
