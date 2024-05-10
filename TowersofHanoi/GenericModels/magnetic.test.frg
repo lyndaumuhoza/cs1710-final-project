@@ -566,11 +566,7 @@ test suite for Mtrace {
         firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
         // possible to have ringsSpreadOut 
         ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
-        // rings can't be in multiple towers at once
-        // ringsNotInMultTowers: {Mtrace and towerTopsOverlap} is unsat
-        // minimum of two towers is required 
-        // minTowersTwo: {Mtrace and #{MTower} < 2} is unsat
-        
+
         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
         // Minimum moves: 4 for 2 Ring, 3 Tower
         // minTrace4For2R3T: {Mtrace and always MCounter.Mcounter < 4} for exactly 2 MRing, 3 MTower is unsat 

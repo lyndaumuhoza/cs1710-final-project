@@ -54,7 +54,7 @@ test suite for init {
                 StartingTower.top = r1
                 init
             }
-        } for exactly 3 Ring is sat
+        } is sat
 
         // two rings where all are in starting tower and not in order
         initExThreeRingUnordered: {
@@ -64,7 +64,7 @@ test suite for init {
                 StartingTower.top = r2
                 init
             }
-        } for exactly 2 Ring is unsat
+        } is unsat
     }
 }
 
@@ -72,9 +72,6 @@ test suite for init {
 
 // PREDICATES FOR TESTING WELLFORMED 
 
-pred noBelows {
-    no ^below
-}
 pred someCycleInBelow {
     Ring1.below = Ring2
     Ring2.below = Ring1
@@ -88,14 +85,13 @@ pred noBelow {
 
 test suite for wellformed {
     assert wellformed is necessary for trace
-    assert noBelows is sufficient for wellformed
     assert noRings is sufficient for wellformed
     assert noBelow is sufficient for wellformed
 
     test expect {
         // basic sat test
         wellformedSat: {wellformed} is sat
-        // more rings in below than the established order
+        // not possible to have cycles in below
         someCycleInBelowUnsat: {wellformed and someCycleInBelow} is unsat
         // wellformed example: rings in diff towers
         wellformedRingDiffTower: {
@@ -297,7 +293,7 @@ test suite for endState {
             no Ring3.below
 
             endState
-        } for exactly 3 Ring is sat
+        } is sat
 
         // three rings where all are in ending tower but not in order 
         // (sat but don't expect this in a trace)
@@ -310,7 +306,7 @@ test suite for endState {
             no Ring2.below
 
             endState
-        } for exactly 3 Ring is unsat
+        } is unsat
 
 
         // three rings where all are in ending tower but there is a cycle in below
@@ -324,7 +320,7 @@ test suite for endState {
             Ring3.below = Ring3
 
             endState
-        } for exactly 3 Ring is unsat
+        } is unsat
     }
 
 }

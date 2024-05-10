@@ -1,7 +1,7 @@
 #lang forge/temporal
 
 
-option max_tracelength 14
+option max_tracelength 16
 option min_tracelength 6
 
 abstract sig BTower {

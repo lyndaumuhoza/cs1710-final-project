@@ -109,13 +109,12 @@ pred MdoNothing {
 
 // Makes a move, then ensures counter increments.
 pred MtotalMoves {
-    // I put this in a separate predicate becuase it was harder to debug within move
     Mmove
     MCounter.Mcounter' = add[MCounter.Mcounter, 1]
 }
 
 // The end state, when the puzzle is satisfied. All rings should end up in the
-// ending tower. All other rings should not have any top rings.
+// ending tower. All other towers should not have any top rings.
 pred MendState {
     MEndingTower.Mtop->(MRing - MEndingTower.Mtop) in ^Mbelow
     some MEndingTower.Mtop
