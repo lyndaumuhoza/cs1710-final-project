@@ -113,7 +113,7 @@ In the basic model, **Ring** has the _below_ field to keep track of which ring i
 
 ## Challenges, Assumptions and Limitations
 
-- Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. We posted on Ed, and were told it was due to forge looking for a way to loop back to a previous state in a lasso trace, but not being able to because the counter was always incrementing. Therefore, we needed to add a "do nothing" transition that allowed the coounter to stop counting.
+- Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. We posted on Ed, and were told it was due to forge looking for a way to loop back to a previous state in a lasso trace, but not being able to because the counter was always incrementing. Therefore, we needed to add a "do nothing" transition that allowed the counter to stop counting.
 
 - Since it has been mathematically proven that the minimum number of moves for the standard Towers of Hanoi puzzle is 2^n - 1, (where n is the number of rings) we could not experiment with very high numbers of rings, as the trace length would grow exponentially and the performance costs would be too high.
 
@@ -158,7 +158,7 @@ We defined correspondence as there always being the same number of rings per tow
 
 - Programmers / Mathematicians: Since the Towers of Hanoi is a puzzle used primarily to demonstrate recursion and induction, this model could be useful for beginner programmers and mathematicians (who might want a visual representation without having to physically make the model)
 
-- Puzzle Players: People who are generally interested in puzzles may be interested because they can look at how the model solves the the puzzle, and compare different versions of the puzzle using this model
+- Puzzle Players: People who are generally interested in puzzles may be interested because they can look at how the model solves the the puzzle, and compare different versions of the puzzle using this model.
 
 ## Takeaways
 

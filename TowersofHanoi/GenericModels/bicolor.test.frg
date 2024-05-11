@@ -624,18 +624,6 @@ pred counterChangesProperly {
         }
     }
 }
-// pred for tests where the trace length is expected to be less than 7
-pred traceLessThan7 {
-    always BCounter.bcounter < 7
-}
-// pred for tests where the trace length is expected to be less than 5
-pred traceLessThan5 {
-    always BCounter.bcounter < 5
-}
-// pred for tests where the trace length is expected to be less than 3
-pred traceLessThan3 {
-    always BCounter.bcounter < 3
-}
 // there are fewer than 2 towers, and more than 1 ring in the model
 pred minTowers2 {
    #{BTower} < 2
@@ -738,7 +726,7 @@ test suite for Btrace {
         // too many tops change (meaning more than one ring is moved)
         tooManyTowersTopChange: {tooManyTowersChange and Btrace} is unsat
         // minimum number of moves for 2 rings is 3
-        minTraceTwoRings: {Btrace and traceLessThan3} for exactly 2 BRing, 3 BTower is unsat
+        minTraceTwoRings: {Btrace and (always BCounter.bcounter < 3)} for exactly 2 BRing, 3 BTower is unsat
         // minimum trace length for two rings is 3
         twoRingTrace3Min: {Btrace and eventually BCounter.bcounter = 3} for exactly 2 BRing, 3 BTower is sat
         // minimum number of towers needed for puzzle is 2
@@ -752,12 +740,12 @@ test suite for Btrace {
         // possible to have this specific move
         validMoveSat: {Btrace and validMoveTrace} is sat
 
-        // // tests that take a long time to run (but can verify with a run statement):
-        // // minimum number of moves for 3 rings, 3 towers is 7
-        // minTraceThreeRings: {Btrace and traceLessThan7} for exactly 3 BRing, 3 BTower is unsat
-        // // minimum number of moves for 3 rings, 4 towers is 5
-        // minTraceThreeRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
-        // // minimum number of moves for 4 rings, 4 towers is 9
-        // minTraceFourRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
+        // tests that take a long time to run (but can verify with a run statement):
+        // minimum number of moves for 3 rings, 3 towers is 7
+        // minTraceThreeRings: {Btrace and always BCounter.bcounter < 7} for exactly 3 BRing, 3 BTower is unsat
+        // minimum number of moves for 3 rings, 4 towers is 5
+        // minTraceThreeRingsFourTowers: {Btrace and always BCounter.bcounter < 5} for exactly 3 BRing, 4 BTower is unsat
+        // minimum number of moves for 4 rings, 4 towers is 9
+        // minTraceFourRingsFourTowers: {Btrace and always BCounter.bcounter < 9} for exactly 3 BRing, 4 BTower is unsat
     }
 }

@@ -149,8 +149,6 @@ pred BtraceNotWell {
 // Minimum moves: 7
 run {Btrace} for exactly 3 BRing, 3 BTower
 // run {Btrace} for exactly 2 BRing, 3 BTower
-// Minimum moves: 7
-run {Btrace} for exactly 3 BRing, 3 BTower
 // Minimum moves: 15 (this one will take 3-4 min)
 // run {Btrace} for exactly 4 BRing, 3 BTower, 5 Int
 // Minimum moves: 5
