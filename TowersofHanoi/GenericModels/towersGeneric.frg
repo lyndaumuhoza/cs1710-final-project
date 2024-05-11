@@ -105,4 +105,4 @@ run {trace} for exactly 3 Ring, 3 Tower
 // Minimum moves: 5
 // run {trace} for exactly 3 Ring, 4 Tower
 // Minimum moves: 9
-// run {trace} for exactly 4 Ring, 4 Tower
+// run {trace} for exactly 4 Ring, 4 Tower, 5 Int

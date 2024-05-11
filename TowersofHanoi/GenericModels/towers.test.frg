@@ -451,7 +451,7 @@ pred oneMoveTrace {
         no r.below'
         no r.order
         Counter.counter = 0
-        Counter.counter = 1
+        Counter.counter' = 1
     }
 }
 // some ring is moved
@@ -502,7 +502,6 @@ test suite for trace {
     assert oneRingMove is necessary for trace
     assert counterChangesProperly is necessary for trace
     assert smallestRingMovedEveryOtherTime is necessary for trace for exactly 2 Ring, 3 Tower
-    assert oneMoveTrace is sufficient for trace
 
     test expect {
         // too many tops change (meaning more than one ring is moved)
@@ -519,6 +518,8 @@ test suite for trace {
         ringsSpreadOutSat: {trace and ringsSpreadOut} is sat
         // possible that all rings are stacked but not in starting or ending
         ringsAllMiddle: {trace and ringsAllInMiddle} is sat
+        // possible to have a one move trace
+        oneMoveSat: {oneMoveTrace and trace} is sat
 
         // tests that take a long time to run (Alternatively, can verify with a run statement in model file):
         // minimum number of moves for 3 rings, 3 towers is 7

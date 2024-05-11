@@ -657,40 +657,41 @@ pred oneMoveTrace {
        no r.Bbelow'
        no r.Border
        BCounter.bcounter = 0
-       BCounter.bcounter = 1
+       BCounter.bcounter' = 1
    }
 }
 // alternating colors are preserved
 pred validMoveTrace {
     #{BRing} = 3
     #{BTower} = 3
-   some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
-               r1.Border = r2
-               r2.Border = r3
-               no r3.Border
+    eventually {
+    some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
+                r1.Border = r2
+                r2.Border = r3
+                no r3.Border
 
 
-               r1.col = Black
-               r2.col = White
-               r3.col = Black
+                r1.col = Black
+                r2.col = White
+                r3.col = Black
 
 
-               t1.Btop = r2
-               t2.Btop = r1
-               t3.Btop = r3
-               no r1.Bbelow
-               no r2.Bbelow
-               no r3.Bbelow
-               t1.Btop' = r1
-               no t2.Btop'
-               t3.Btop' = r3
-               r1.Bbelow' = r2
-               no r2.Bbelow'
-               no r3.Bbelow'
+                t1.Btop = r2
+                t2.Btop = r1
+                t3.Btop = r3
+                no r1.Bbelow
+                no r2.Bbelow
+                no r3.Bbelow
+                t1.Btop' = r1
+                no t2.Btop'
+                t3.Btop' = r3
+                r1.Bbelow' = r2
+                no r2.Bbelow'
+                no r3.Bbelow'
 
-        BCounter.bcounter = 0
-        BCounter.bcounter = 1
-   }
+            BCounter.bcounter' = add[BCounter.bcounter, 1]
+    }
+    }
 }
 // some ring is moved
 pred ringMoving[r: BRing] {
@@ -732,8 +733,6 @@ test suite for Btrace {
     assert counterChangesProperly is necessary for Btrace
     assert smallestRingMovedEveryOtherTime is necessary for Btrace for exactly 2 BRing, 3 BTower
     assert allRingsAlternatingColors is necessary for Btrace
-    assert oneMoveTrace is sufficient for Btrace
-    assert validMoveTrace is sufficient for Btrace
 
     test expect {
         // too many tops change (meaning more than one ring is moved)
@@ -748,6 +747,10 @@ test suite for Btrace {
         multRingsMove: {Btrace and multipleRingsMove} is unsat
         // ring 1 can not be on top of ring 3 because they are the same color
         alterrnatingColorsinvalid: {Btrace and firstRingOnTopofThird} is unsat
+        // possible to have one move trace 
+        oneMoveSat: {Btrace and oneMoveTrace} is sat
+        // possible to have this specific move
+        validMoveSat: {Btrace and validMoveTrace} is sat
 
         // // tests that take a long time to run (but can verify with a run statement):
         // // minimum number of moves for 3 rings, 3 towers is 7

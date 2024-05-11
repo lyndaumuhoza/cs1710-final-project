@@ -429,6 +429,9 @@ test suite for MendState {
                 no r3.Mbelow
                 no r3.Morder
                 MEndingTower.Mtop = r1
+                r1.pole = r2.pole
+                r2.pole = r3.pole
+                MEndingTower.tpole = r1.pole
                 MendState
             }
         } for exactly 3 MRing is sat
@@ -444,6 +447,9 @@ test suite for MendState {
                 r3.Mbelow = r2
                 no r3.Morder
                 MEndingTower.Mtop = r1
+                r1.pole = r2.pole
+                r2.pole = r3.pole
+                MEndingTower.tpole = r1.pole
                 MendState
             }
         } for exactly 3 MRing is sat
@@ -460,9 +466,31 @@ test suite for MendState {
                 r3.Mbelow = r3
                 no r3.Morder
                 MEndingTower.Mtop = r1
+                MEndingTower.Mtop = r1
+                r1.pole = r2.pole
+                r2.pole = r3.pole
+                MEndingTower.tpole = r1.pole
                 MendState
             }
         } for exactly 3 MRing is sat
+
+        // three MRings where all are in ending MTower in order but with bad polarity
+        MendStateExThreeMRingBadPole: {
+            some disj r1, r2, r3: MRing | {
+                r1.Mbelow = r2 
+                r2.Mbelow = r3
+                r1.Morder = r2
+                r2.Morder = r3
+                r3.Mbelow = r3
+                no r3.Morder
+                MEndingTower.Mtop = r1
+                MEndingTower.Mtop = r1
+                r1.pole = r2.pole
+                r2.pole = r3.pole
+                MEndingTower.tpole != r1.pole
+                MendState
+            }
+        } for exactly 3 MRing is unsat
     }
 
 }
@@ -595,33 +623,33 @@ pred samePolesButDiffStack {
 }
 
 test suite for Mtrace {
-    // assert orderAlwaysPreserved is necessary for Mtrace
-    // assert ringsEndAtEndingTower is necessary for Mtrace
-    // assert ringsStartAtStartingTower is necessary for Mtrace
-    // assert oneRingMove is necessary for Mtrace
-    // assert oneRingChangePolarity is necessary for Mtrace
-    // assert counterChangesProperly is necessary for Mtrace
-    // assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
-    // assert oneMoveTrace is sufficient for Mtrace
+    assert orderAlwaysPreserved is necessary for Mtrace
+    assert ringsEndAtEndingTower is necessary for Mtrace
+    assert ringsStartAtStartingTower is necessary for Mtrace
+    assert oneRingMove is necessary for Mtrace
+    assert oneRingChangePolarity is necessary for Mtrace
+    assert counterChangesProperly is necessary for Mtrace
+    assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
+    assert oneMoveTrace is sufficient for Mtrace
 
     test expect {
-        // // basic sat test
-        // traceSat: {Mtrace} is sat
-        // // minimum number of towers needed for puzzle is 2
-        // minTowersTwo: {Mtrace and minTowers2} is unsat
-        // // multiple rings move at a time is invalid
-        // multRingsMove: {Mtrace and multipleRingsMove} is unsat
-        // // multiple rings change polarity is invalid
-        // multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
-        // // possible to stack first ring on top of third
-        // firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
-        // // possible to have ringsSpreadOut 
-        // ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
-        // // possible to solve the puzzle when start and end tower have same polarity
-        // startEndMatchPole: {Mtrace and startEndSamePole} is sat
-        // // not possible to solve the puzzle when all towers have the same polarity
-        // allTowersMatchPole: {Mtrace and allSameTowerPoles} is unsat
-        // // possible to solve the puzzle when all towers have the same polarity
+        //  basic sat test
+        traceSat: {Mtrace} is sat
+        // minimum number of towers needed for puzzle is 2
+        minTowersTwo: {Mtrace and minTowers2} is unsat
+        // multiple rings move at a time is invalid
+        multRingsMove: {Mtrace and multipleRingsMove} is unsat
+        // multiple rings change polarity is invalid
+        multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
+        // possible to stack first ring on top of third
+        firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
+        // possible to have ringsSpreadOut 
+        ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
+        // possible to solve the puzzle when start and end tower have same polarity
+        startEndMatchPole: {Mtrace and startEndSamePole} is sat
+        // not possible to solve the puzzle when all towers have the same polarity
+        allTowersMatchPole: {Mtrace and allSameTowerPoles} is unsat
+        // possible to solve the puzzle when all towers have the same polarity
         matchPolesButDiffStack: {Mtrace and samePolesButDiffStack} is sat
 
         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
