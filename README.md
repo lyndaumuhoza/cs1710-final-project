@@ -1,5 +1,6 @@
 # cs1710finalproject
 
+
 ## Initial Proposal + First Attempts
 
 Initially, we proposed modeling the card game, Uno. We thought about modeling a trace from start to end in order to look at win conditions and the different scenarios which would guarantee a win. However, when we began modeling, we ran into major performance issues, which made this idea lose its appeal. We tried using an optimizer to limit the scope of Card instances, and we even cut down on the number of players to 2 and the nubmer of cards to 20, but running just a simple trace would take a long time. In the end, we found that removing the concept of a deck (which keeps track of the cards that can be drawn) sped up the runtime significantly. We realized that we couldn't model a full trace, and needed to focus more on the properties of transitions, but given how much we cut down the model, we did not have many concrete properties we were interested in investigating.
@@ -17,6 +18,9 @@ In this variation of the Towers of Hanoi, each ring has one of two colors. The i
 ### Magnetic towers
 
 In this variation of the Towers of Hanoi, each ring has magnetic poles, with either the North side facing up or the South side facing up. The initial tower starts with all rings facing in the same direction. Everytime a ring is moved, the ring must be flipped. The goal is to get all the rings to another tower without allowing two rings to have the same pole facing each other (as this would prepel the rings). The basic size constraint still applies here as well.
+
+### Demo Video
+To view our demo video, click <a href="https://drive.google.com/drive/folders/1qcYuzE15HGw3t8fxESK-cE-88l8aIY73?usp=sharing"> here! </a>
 
 ## Directory Structure
 
@@ -74,11 +78,11 @@ All models will have Tower and Ring sigs. The Ring's below field defines the sta
 
 In all generic versions of the model, there will be an order field, which acts as the pre-defined size order of the rings. (If Ring1's order is Ring2, that means Ring2 is expected to be right below it if the rings are properly ordered by size).
 
-Below is an example running the generic bicolor model, with explanations for the sigs and fields. 
+Below is an example running the generic bicolor model, with explanations for the sigs and fields.
 
 <img src="images/bicolor-trace.png">
 
-As we step through the time states, the "below" and "top" arrows will change, reflecting a ring moving from one tower to another. 
+As we step through the time states, the "below" and "top" arrows will change, reflecting a ring moving from one tower to another.
 
 ## Goals
 
@@ -115,9 +119,11 @@ In the basic model, **Ring** has the _below_ field to keep track of which ring i
 
 - Tracking the trace lengths using a counter was difficult, we were running into an issue where our counter can increment or decrement by any number other than 1. We posted on Ed, and were told it was due to forge looking for a way to loop back to a previous state in a lasso trace, but not being able to because the counter was always incrementing. Therefore, we needed to add a "do nothing" transition that allowed the counter to stop counting.
 
-- Since it has been mathematically proven that the minimum number of moves for the standard Towers of Hanoi puzzle is 2^n - 1, (where n is the number of rings) we could not experiment with very high numbers of rings, as the trace length would grow exponentially and the performance costs would be too high.
+- Since it has been mathematically proven that the minimum number of moves for the standard Towers of Hanoi puzzle is 2^n - 1, (where n is the number of rings) we could not experiment with very high numbers of rings, as the trace length would grow exponentially and the performance costs would be too high. 
 
 - Though we were able to compare correspondene in the 3 Ring, 3 Tower case, we had to make optimizations to improve runtime. That meant looking for correspondence in the 4 Ring, 3 Tower would not be possible without waiting for even longer. In addition, we had to define a max trace length in our model files, (and though we knew the minimum trace length), this meant the correspondence tests were limited in which traces it could look at.
+
+- We checked trace length properties using tests that limit the Counter. However, some tests take a really long time to run. To work with this, we ran the trace and checked if it was satisfiable after modifying "option_max_trace_length." This helped us find the minimum number of moves / minimum trace length.
 
 ## Testing
 

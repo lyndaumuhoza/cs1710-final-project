@@ -654,11 +654,11 @@ test suite for Mtrace {
         oneMoveSat: {Mtrace and oneMoveTrace} is sat
 
         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
-        // Minimum moves: 4 for 2 Ring, 3 Tower
+        // Minimum moves: 4 
         // minTrace4For2R3T: {Mtrace and always MCounter.Mcounter < 4} for exactly 2 MRing, 3 MTower is unsat 
         // Minimum moves: 13
-        // minTrace13For2R3T: {Mtrace and always MCounter.Mcounter < 13} for exactly 3 MRing, 3 MTower is unsat
+        // minTrace13For3R3T: {Mtrace and always MCounter.Mcounter < 13} for exactly 3 MRing, 3 MTower is unsat
         // Minimum moves: 7
-        // minTrace13For2R3T: {Mtrace and always MCounter.Mcounter < 7} for exactly 3 MRing, 3 MTower is unsat
+        // minTrace7For3R4T: {Mtrace and always MCounter.Mcounter < 7} for exactly 3 MRing, 4 MTower is unsat
     }
 }

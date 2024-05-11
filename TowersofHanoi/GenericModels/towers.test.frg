@@ -527,6 +527,6 @@ test suite for trace {
         // // minimum number of moves for 3 rings, 4 towers is 5
         // minTraceThreeRingsFourTowers: {trace and always Counter.counter < 5} for exactly 3 Ring, 4 Tower is unsat
         //minimum number of moves for 4 rings, 4 towers is 9
-        // minTraceFourRingsFourTowers: {trace and traceLessThan5} for exactly 3 Ring, 4 Tower is unsat
+        // minTraceFourRingsFourTowers: {trace and always Counter.counter < 9} for exactly 4 Ring, 4 Tower is unsat
     }
 }
