@@ -99,7 +99,7 @@ pred Mmove {
 }
 
 // The end state, when the puzzle is satisfied. All rings should end up in the
-// ending tower. All other rings should not have any top rings.
+// ending tower. All other towers should not have any top rings.
 pred MendState {
     MRing1.Mbelow = MRing2
     MRing2.Mbelow = MRing3

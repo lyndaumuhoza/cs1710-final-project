@@ -4,22 +4,33 @@
 option max_tracelength 16
 option min_tracelength 6
 
+// Tower sig keeps track of the top ring in the stack
 abstract sig BTower {
     var Btop: lone BRing
 }
+
+// Starting tower is where all rings start
+// Ending tower is where all the rings should get to
 one sig BStartingTower, BMidTower, BEndingTower extends BTower{}
 
+// Ring keeps track of the ring immediately below it and its color 
+// (which never changes)
 abstract sig BRing {
     var Bbelow: lone BRing, // order on stack valid if Btop BRing is bigger
     // specifying start color
     col: one Color
 }
 
+// Sigs for assigning color to ring
 abstract sig Color {}
 one sig Black, White extends Color{}
 
+// Expect three rings. Size order goes from 1 to 2 to 3.
 one sig BRing1, BRing2, BRing3 extends BRing {}
 
+
+// Sets the initial order of rings in the starting tower, and ensures no other
+// tower has a top ring. Also constrains ring colors to be alternating.
 pred Binit {
     // enforcing linearity
     BRing1.Bbelow = BRing2
@@ -35,6 +46,8 @@ pred Binit {
     BRing3.col = Black
 }
 
+// Ensures rings are always in order, and that any ring does not have the same color as
+// the ring below it.
 pred Bwellformed {
     all r: BRing | {
         r.Bbelow != r 
@@ -48,6 +61,8 @@ pred Bwellformed {
     BRing3.Bbelow != BRing1 and BRing3.Bbelow != BRing2
 }
 
+// Defines the constraints to make a move. Two towers will have their tops changed
+// to reflect this movement. 
 pred Bmove {
     //t1's Btop BRing will be the next ring, t2's Btop BRing will be t1's previous Btop ring
     some disj t1, t2, t3: BTower, r1: BRing {
@@ -64,6 +79,8 @@ pred Bmove {
     }    
 }
 
+// The end state, when the puzzle is satisfied. All rings should end up in the
+// ending tower. All other towers should not have any top rings.
 pred BendState {
     BRing1.Bbelow = BRing2
     BRing2.Bbelow = BRing3
@@ -73,6 +90,8 @@ pred BendState {
     BEndingTower.Btop = BRing1
 }
 
+// A trace that solves the puzzle from init to endState and is always guaranteed
+// to be wellformed.
 pred Btrace {
     Binit
     always Bwellformed
@@ -80,23 +99,20 @@ pred Btrace {
     eventually BendState
 }
 
+// A trace that gets from init to endState but moves are not guaranteed to be
+// wellformed. Used for testing correspondence.
 pred BtraceNotWell {
     Binit
     always Bmove
     eventually BendState
 }
 
+test expect {
+    initSat: {Binit} is sat
+    wellformedSat: {Binit and always Bwellformed and always Bmove} is sat
+    moveSat: {always Bmove} is sat 
+    endSat: {always Bwellformed and always Bmove and eventually BendState} is sat
+}
 
-// test expect {
-//     initSat: {init} is sat
-//     wellformedSat: {init and always wellformed and always move} is sat
-//     moveSat: {always move} is sat 
-//     endSat: {always wellformed and always move and eventually endState} is sat
-// }
 
-// test expect {
-//     // total number of moves sould be 13
-//     numberOfMoves: {totalMoves and Counter.counter = 13} for 5 Int is sat
-// }
-
-// run {init and always wellformed and always move and eventually endState} for exactly 3 Ring, 3 Tower, 2 Color
+run {Btrace} for exactly 3 BRing, 3 BTower, 2 Color

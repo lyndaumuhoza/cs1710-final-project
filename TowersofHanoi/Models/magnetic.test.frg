@@ -2,35 +2,41 @@
 
 open "magneticTowers.frg"
 
----------------------------------------------------
+------------------------------------------------------------------------------
+// TEST SUITE SIMILAR TO OTHER "magnetic.test.frg" FILE, BUT MADE TO WORK WITH
+// HARD-CODED VERSION (TO VERIFY BOTH MODEL VERSIONS)
+-------------------------------------------------------------------------------
 
 // PREDICATES FOR TESTING INIT
 
+// there is some ring whose below field links to itself
 pred someRingsLinkToSelf {
     some r: MRing | r -> r in ^Mbelow
 }
-pred someRingsLinkToSelfBelow {
-    some iden & ^Mbelow
-}
+// all ring stacks (defined by below) follows the expected size constraint (defined by order)
 pred allMRingInOrder {
     MRing1.Mbelow = MRing2
     MRing2.Mbelow = MRing3
     no MRing3.Mbelow
 }
+// the starting tower has some top ring
 pred someStartingTop {
     some MStartingTower.Mtop
 }
+// all rings are in the starting tower
 pred allRingInStartTower {
     MStartingTower.Mtop = MRing1
     MStartingTower.Mtop -> MRing2 in ^Mbelow
     MStartingTower.Mtop -> MRing3 in ^Mbelow
 }
+// there is one ring in the starting tower and no rings elsewhere
 pred oneRingInStarting {
-    #{MRing} = 1 and some MStartingTower.Mtop
+    some MStartingTower.Mtop
     all t: MTower | t.Mtop != MStartingTower.Mtop
     MRing1.pole = North
     MStartingTower.tpole = North
 }
+// all rings have the same polarity
 pred allRingsMatchPolarity {
     all disj r1, r2: MRing | r1.pole = r2.pole
 }
@@ -46,10 +52,8 @@ test suite for Minit {
         initSat: {Minit} is sat
         // all rings match polarity at first 
         matchPolarity: {Minit implies allRingsMatchPolarity} is theorem
-        // no cycles in order
-        someCyclesInitUnsat: {Minit and someRingsLinkToSelf} is unsat
         // no cycles in below
-        someBelowCyclesInitUnsat: {Minit and someRingsLinkToSelfBelow} is unsat
+        someCyclesInitUnsat: {Minit and someRingsLinkToSelf} is unsat
         // no rings makes init unsat
         noRingsInitUnsat: {#{MRing}=0 and Minit} is unsat
 
@@ -66,7 +70,7 @@ test suite for Minit {
             Minit
         } is sat
 
-        // two rings where all are in starting tower, in order, but not with correct polarity
+        // three rings where all are in starting tower, in order, but not with correct polarity
         initExThreeRingBadPole: {
             MStartingTower.Mtop = MRing1
             MRing1.Mbelow = MRing2
@@ -98,6 +102,7 @@ test suite for Minit {
 
 // PREDICATES FOR TESTING Mwellformed 
 
+// no rings are stacked and all rings have the same polarity as the tower they are in
 pred noMbelowsAndMatchTowers {
     no ^Mbelow
     all r: MRing | some t: MTower | {
@@ -105,9 +110,11 @@ pred noMbelowsAndMatchTowers {
         t.tpole = r.pole
     }
 }
+// there are no rings in the model
 pred noMRings {
     #{MRing} = 0
 }
+// there is a cycle between ring 1 and ring 2
 pred someCycleInBelow {
     MRing1.Mbelow = MRing2
     MRing2.Mbelow = MRing1
@@ -195,43 +202,60 @@ test suite for Mwellformed {
 
 // PREDICATES FOR TESTING Mmove
 
+// some tower loses its top ring
 pred oneMTowerDecMRing {
     some t: MTower | t.Mtop' = t.Mtop.Mbelow
 }
+// there are two towers for which the top of one became the top of the other
 pred MRingMmoveDiffMTower {
     some disj t1, t2: MTower | t1.Mtop' = t2.Mtop
 }
+// assuming a move is made from initial stack, there is some ring who gets moved 
+// onto another stack
 pred onlyOneMRingMmove {
-    Minit and Mmove and #{MRing} > 1 implies {
+    Minit and Mmove implies {
         some r: MRing | {
             r.Mbelow' != r.Mbelow 
             all r1: MRing | r1 != r implies r1.Mbelow' = r1.Mbelow
         }
     }
 }
+// given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred MorderPreserved {
     Mwellformed and Mmove implies {
-        all r: MRing | no r.Morder implies no r.Mbelow
+        no MRing3.Mbelow 
+        MRing2.Mbelow != MRing1
+        all r: MRing | r -> r not in ^Mbelow
     }
 }
-pred oneMRingTwoMTowerMmove {
-    #{MRing} = 1
-    #{MTower} = 2
-    some disj r1: MRing, t1, t2: MTower | {
-        t1.tpole = North
-        t2.tpole = South
-        no r1.Morder
-        no r1.Mbelow
-        t1.Mtop = r1
-        no t2.Mtop
-        r1.pole = North
-        
-        no r1.Mbelow'
-        no t1.Mtop'
-        t2.Mtop' = r1
-        r1.pole' = South
-    }
+// an example of moving ring from one tower to another
+pred oneRingExMove {
+    MStartingTower.tpole = North
+    MMidTower.tpole = South
+    MEndingTower.tpole = South
+
+    no MRing1.Mbelow
+    no MRing2.Mbelow
+    no MRing3.Mbelow
+    MStartingTower.Mtop = MRing1
+    MMidTower.Mtop = MRing2
+    MEndingTower.Mtop = MRing3
+    MRing1.pole = North
+    MRing2.pole = South
+    MRing3.pole = South
+
+    no MStartingTower.Mtop'
+    MMidTower.Mtop' = MRing1
+    MEndingTower.Mtop' = MRing3
+    MRing1.Mbelow' = MRing2
+    no MRing2.Mbelow'
+    no MRing3.Mbelow'
+    MRing1.pole' = South
+    MRing2.pole' = South
+    MRing3.pole' = South
+
 }
+// three towers' top ring changes at once
 pred tooManyMTowersChange {
     some disj t1, t2, t3: MTower | {
         t1.Mtop' != t1.Mtop
@@ -239,6 +263,7 @@ pred tooManyMTowersChange {
         t3.Mtop' != t3.Mtop
     }
 }
+// a ring is flipped to change polarity 
 pred oneRingFlipsOnMove {
     some r: MRing | {
         r.pole' != r.pole 
@@ -252,7 +277,7 @@ test suite for Mmove {
     assert onlyOneMRingMmove is necessary for Mmove
     assert MorderPreserved is necessary for Mmove
     assert oneRingFlipsOnMove is necessary for Mmove
-    assert oneMRingTwoMTowerMmove is sufficient for Mmove
+    assert oneRingExMove is sufficient for Mmove
 
     test expect {
         // basic sat test
@@ -264,328 +289,285 @@ test suite for Mmove {
 
         // Mmove starting from Minitial stack
         MinitialMmoveEx: {
-            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
-                t1.Mtop = r1
-                r1.Mbelow = r2
-                r2.Mbelow = r3
-                no r3.Mbelow
-                r1.Morder = r2
-                r2.Morder = r3
-                no r3.Morder
-                no t2.Mtop
-                no t3.Mtop
-                t1.tpole = North
-                t2.tpole = South
-                t3.tpole = South
-                r1.pole = North
-                r2.pole = North
-                r3.pole = North
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
 
-                t1.Mtop' = r2
-                t2.Mtop' = r1
-                no r1.Mbelow'
-                r2.Mbelow' = r3
-                no r3.Mbelow'
-                no t3.Mtop'
-                r2.pole' = North
-                r3.pole' = North
-                r1.pole' = South
+            MStartingTower.Mtop = MRing1
+            MRing1.Mbelow = MRing2
+            MRing2.Mbelow = MRing3
+            no MRing3.Mbelow
+            MRing1.pole = North
+            MRing2.pole = North
+            MRing3.pole = North
+            no MMidTower.Mtop
+            no MEndingTower.Mtop
 
-                Minit
-                Mmove
-            } 
+            MStartingTower.Mtop' = MRing2
+            MMidTower.Mtop' = MRing1
+            no MEndingTower.Mtop'
+            no MRing1.Mbelow'
+            MRing2.Mbelow' = MRing3
+            no MRing3.Mbelow'
+            MRing1.pole' = South
+            MRing2.pole' = North
+            MRing3.pole' = North
+
+            Minit
+            Mmove
         } is sat
 
         // basic Mmove moving smallest MRing onto largest MRing
         basicMmoveEx: {
-            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
-                r1.Morder = r2
-                r2.Morder = r3
-                no r3.Morder
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
 
-                t1.Mtop = r2
-                t2.Mtop = r1
-                t3.Mtop = r3
-                no r1.Mbelow
-                no r2.Mbelow 
-                no r3.Mbelow 
-                t1.tpole = North
-                t2.tpole = North
-                t3.tpole = South
-                
-                r2.pole = North
-                r1.pole = North
-                r3.pole = South
+            MStartingTower.Mtop = MRing1
+            MMidTower.Mtop = MRing2
+            MEndingTower.Mtop = MRing3
+            no MRing1.Mbelow
+            no MRing2.Mbelow
+            no MRing3.Mbelow
+            MRing1.pole = North
+            MRing2.pole = South
+            MRing3.pole = South
 
-                t1.Mtop' = r2
-                no t2.Mtop'
-                t3.Mtop' = r1
-                r1.Mbelow' = r3
-                no r2.Mbelow'
-                no r3.Mbelow'
-                r2.pole' = North
-                r3.pole' = South
-                r1.pole' = South
+            no MStartingTower.Mtop'
+            MMidTower.Mtop' = MRing2
+            MEndingTower.Mtop' = MRing1
+            MRing1.Mbelow' = MRing3
+            no MRing2.Mbelow'
+            no MRing3.Mbelow'
+            MRing1.pole' = South
+            MRing2.pole' = South
+            MRing3.pole' = South
 
-                Mmove
-            }
+            Mmove
         } is sat
 
         // Mmove resulting in end state
         endingMmoveEx: {
-            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
-                r1.Morder = r2
-                r2.Morder = r3
-                no r3.Morder
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
 
-                no t1.Mtop
-                t2.Mtop = r1
-                no r1.Mbelow
-                t3.Mtop = r2
-                r2.Mbelow = r3
-                no r3.Mbelow
-                t1.tpole = North
-                t2.tpole = South
-                t3.tpole = South
-                r1.pole = North
-                r2.pole = South
-                r3.pole = South
+            MStartingTower.Mtop = MRing1
+            no MMidTower.Mtop
+            MEndingTower.Mtop = MRing2
+            no MRing1.Mbelow
+            MRing2.Mbelow = MRing3
+            no MRing3.Mbelow
+            MRing1.pole = North
+            MRing2.pole = South
+            MRing3.pole = South
 
-                no t1.Mtop'
-                no t2.Mtop'
-                t3.Mtop' = r1
-                r1.Mbelow' = r2
-                r2.Mbelow' = r3
-                no r3.Mbelow'
-                r1.pole' = South
-                r2.pole' = South
-                r3.pole' = South
+            no MStartingTower.Mtop'
+            no MMidTower.Mtop'
+            MEndingTower.Mtop' = MRing1
+            MRing1.Mbelow' = MRing2
+            MRing2.Mbelow' = MRing3
+            no MRing3.Mbelow'
+            MRing1.pole' = South
+            MRing2.pole' = South
+            MRing3.pole' = South
 
-                Mmove
-                next_state MendState
-            } 
+            Mmove
+            next_state MendState
         } is sat
     }
 }
 
-// --------------------------------------------
+--------------------------------------------
 
-// // PREDICATES FOR TESTING MendState 
+// PREDICATES FOR TESTING MendState 
 
-// pred allMRingsInEndMTower {
-//     all r: MRing | r != MEndingTower.Mtop implies MEndingTower.Mtop -> r in ^Mbelow
-// }
-// pred traceMustEndInMorder {
-//     {Minit and always Mmove and eventually MendState} implies allMRingInOrder
-// }
-// pred someMRingInStarting {
-//     some r: MRing | MStartingTower.Mtop = r
-// }
-// pred someMRingInEndingMtop {
-//     some MEndingTower.Mtop
-// }
-// pred oneMRingInEnding {
-//     #{MRing} = 1 and some MEndingTower.Mtop
-//     all t: MTower | t.Mtop != MEndingTower.Mtop
-//     all r: MRing | r.pole = MEndingTower.tpole
-// }
-// pred allRingsMatchEndPolarity {
-//     all r: MRing | r.pole = MEndingTower.tpole
-// }
+// all rings are stacked in the ending tower
+pred allMRingsInEndMTower {
+    MEndingTower.Mtop = MRing1
+    MRing1.Mbelow = MRing2
+    MRing2.Mbelow = MRing3
+}
+// given a trace, it is expected that all rings are in order
+pred traceMustEndInMorder {
+    {Minit and always Mmove and eventually MendState} implies allMRingInOrder
+}
+// there is some ring in the starting tower
+pred someMRingInStarting {
+    some r: MRing | MStartingTower.Mtop = r
+}
+// there is some ring in the ending tower
+pred someMRingInEndingMtop {
+    some MEndingTower.Mtop
+}
+// there is exactly one ring in the ending tower with the correct polarity
+pred oneMRingInEnding {
+    some MEndingTower.Mtop
+    all t: MTower | t.Mtop != MEndingTower.Mtop
+    all r: MRing | r.pole = MEndingTower.tpole
+}
+// all rings match the polarity of the ending tower
+pred allRingsMatchEndPolarity {
+   {Minit and always Mmove and eventually MendState} implies {all r: MRing | r.pole = MEndingTower.tpole}
+}
 
-// test suite for MendState {
-//     assert allMRingsInEndMTower is necessary for MendState
-//     assert traceMustEndInMorder is necessary for MendState
-//     assert someMRingInEndingMtop is necessary for MendState
-//     assert allRingsMatchEndPolarity is necessary for MendState
-//     assert oneMRingInEnding is sufficient for MendState
+test suite for MendState {
+    assert allMRingsInEndMTower is necessary for MendState
+    assert traceMustEndInMorder is necessary for MendState
+    assert someMRingInEndingMtop is necessary for MendState
+    assert allRingsMatchEndPolarity is necessary for MendState
+    assert oneMRingInEnding is sufficient for MendState
 
-//     test expect {
-//         // basic sat test
-//         MendStateSat: {MendState} is sat
-//         // some MRing in other MTower
-//         MRingInStarting: {someMRingInStarting and MendState} is unsat
-//         // no MRings means MendState is unsat
-//         noMRingsEndSat: {noMRings and MendState} is unsat
-//         // three MRings where all are in ending MTower and in Morder
-//         MendStateExThreeMRing: {
-//             some disj r1, r2, r3: MRing | {
-//                 r1.Mbelow = r2 
-//                 r2.Mbelow = r3
-//                 r1.Morder = r2
-//                 r2.Morder = r3
-//                 no r3.Mbelow
-//                 no r3.Morder
-//                 MEndingTower.Mtop = r1
-//                 MendState
-//             }
-//         } for exactly 3 MRing is sat
+    test expect {
+        // basic sat test
+        MendStateSat: {MendState} is sat
+        // some MRing in other MTower
+        MRingInStarting: {someMRingInStarting and MendState} is unsat
+        // no MRings means MendState is unsat
+        noMRingsEndSat: {noMRings and MendState} is unsat
+        // three MRings where all are in ending MTower and in Morder
+        MendStateExThreeMRing: {
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
 
-//         // three MRings where all are in ending MTower but not in Morder 
-//         // (sat but don't expect this in a trace)
-//         MendStateExThreeMRingUnMordered: {
-//             some disj r1, r2, r3: MRing | {
-//                 r1.Mbelow = r2 
-//                 r2.Mbelow = r3
-//                 r1.Morder = r2
-//                 r2.Morder = r3
-//                 r3.Mbelow = r2
-//                 no r3.Morder
-//                 MEndingTower.Mtop = r1
-//                 MendState
-//             }
-//         } for exactly 3 MRing is sat
+            no MStartingTower.Mtop
+            no MMidTower.Mtop
+            MEndingTower.Mtop = MRing1
+            MRing1.Mbelow = MRing2
+            MRing2.Mbelow = MRing3
+            no MRing3.Mbelow
+            MRing1.pole = South
+            MRing2.pole = South
+            MRing3.pole = South
+            MendState
+        } is sat
+
+        // three MRings where all are in ending MTower but not in order 
+        MendStateRingUnordered: {
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
+
+            no MStartingTower.Mtop
+            no MMidTower.Mtop
+            MEndingTower.Mtop = MRing1
+            MRing1.Mbelow = MRing3
+            MRing3.Mbelow = MRing2
+            no MRing2.Mbelow
+            MRing1.pole = South
+            MRing2.pole = South
+            MRing3.pole = South
+            MendState
+        } is unsat
 
 
-//         // three MRings where all are in ending MTower but there is a cycle in Mbelow
-//         // (sat but don't expect this in a trace)
-//         MendStateExThreeMRingCycled: {
-//             some disj r1, r2, r3: MRing | {
-//                 r1.Mbelow = r2 
-//                 r2.Mbelow = r3
-//                 r1.Morder = r2
-//                 r2.Morder = r3
-//                 r3.Mbelow = r3
-//                 no r3.Morder
-//                 MEndingTower.Mtop = r1
-//                 MendState
-//             }
-//         } for exactly 3 MRing is sat
-//     }
+        // three MRings where all are in ending MTower but polarity is bad
+        // (sat but don't expect this in a trace)
+        MendStateBadPolarity: {
+            MStartingTower.tpole = North
+            MMidTower.tpole = South
+            MEndingTower.tpole = South
 
-// }
+            no MStartingTower.Mtop
+            no MMidTower.Mtop
+            MEndingTower.Mtop = MRing1
+            MRing1.Mbelow = MRing2
+            MRing2.Mbelow = MRing3
+            no MRing3.Mbelow
+            MRing1.pole = North
+            MRing2.pole = South
+            MRing3.pole = South
+            MendState
+        } is sat
+    }
 
-// --------------------------------------------
+}
 
-// // PREDICATES FOR TESTING TRACE
+--------------------------------------------
 
-// pred orderAlwaysPreserved {
-//     always {
-//         all r: MRing | some r.Mbelow implies r->r.Mbelow in ^Morder
-//     }
-// }
-// pred ringsEndAtEndingTower {
-//     eventually some MEndingTower.Mtop 
-//     eventually {all r: MRing | r != MEndingTower.Mtop implies MEndingTower.Mtop -> r in ^Mbelow}
-// }
-// pred ringsStartAtStartingTower {
-//     some MStartingTower.Mtop
-//     all r: MRing | r != MStartingTower.Mtop implies MStartingTower.Mtop -> r in ^Mbelow
-// }
-// pred oneRingMove {
-//     always {
-//         Mmove implies {
-//             some r: MRing | some r.Mbelow implies r.Mbelow' != r.Mbelow
-//         }
-//     }
-// }
-// pred oneRingChangePolarity {
-//     always {
-//         Mmove implies {
-//             some r: MRing | some r.Mbelow implies r.pole' != r.pole
-//         }
-//     }
-// }
-// pred multipleRingsMove {
-//     some disj r1, r2: MRing | r1.Mbelow' != r1.Mbelow and r2.Mbelow' != r2.Mbelow
-// }
-// pred multipleRingsChangePolarity {
-//     some disj r1, r2: MRing | r1.pole' != r1.pole and r2.pole' != r2.pole
+// PREDICATES FOR TESTING TRACE
 
-// }
-// pred counterChangesProperly {
-//     always {
-//         MtotalMoves implies {
-//             MCounter.Mcounter' != MCounter.Mcounter
-//         }
-//         MdoNothing implies {
-//             MCounter.Mcounter' = MCounter.Mcounter
-//         }
-//     }
-// }
-// pred minTowers2 {
-//     #{MTower} < 2
-//     #{MRing} > 1
-// }
-// pred oneMoveTrace {
-//     #{MRing} = 1
-//     #{MTower} = 3
-//     some r: MRing, t: MTower | {
-//         t != MStartingTower and t != MEndingTower
-//         MStartingTower.Mtop = r
-//         no MStartingTower.Mtop'
-//         MEndingTower.Mtop' = r
-//         no MEndingTower.Mtop
-//         no t.Mtop
-//         no t.Mtop'
-//         no r.Mbelow
-//         no r.Mbelow'
-//         no r.Morder
-//         MCounter.Mcounter = 0
-//         MCounter.Mcounter = 1
-//         r.pole != r.pole'
-//     }
-// }
-// pred ringMoving[r: MRing] {
-//     r.Mbelow' != r.Mbelow or (some disj t1, t2: MTower | t1.Mtop = r and t2.Mtop' = r)
-// }
-// pred smallestRingMovedEveryOtherTime {
-//     {always MtotalMoves until MCounter.Mcounter = 13 and always MCounter.Mcounter < 14} implies always {
-//     some r: MRing | {
-//         no {MRing -> r & ^Morder} and {
-//             ringMoving[r] implies {next_state {ringMoving[r]} or next_state next_state {ringMoving[r]}}
-//         }
-//     }
-//     }
-// }
-// pred firstRingOnTopofThird {
-//     eventually {
-//         some disj r1, r2, r3: MRing | {
-//             r1.Morder = r2
-//             r2.Morder = r3
-//             r1.Mbelow = r3
-//         }
-//     }
-// }
-// pred ringsSpreadOut {
-//     eventually {
-//         some disj r1, r2, r3: MRing | no r1.Mbelow and no r2.Mbelow and no r3.Mbelow
-//     }
-// }
-// pred towerTopsOverlap{
-//     eventually {some disj t1, t2: MTower, r: MRing | t1.Mtop = r and t2.Mtop = r}
-// }
+// the size order is always maintined
+pred orderAlwaysPreserved {
+    always {
+        no MRing3.Mbelow 
+        MRing2.Mbelow != MRing1
+        all r: MRing | r -> r not in ^Mbelow
+    }
+}
+// all rings end up in the end tower eventually
+pred ringsEndAtEndingTower {
+    eventually some MEndingTower.Mtop 
+    eventually {all r: MRing | r != MEndingTower.Mtop implies MEndingTower.Mtop -> r in ^Mbelow}
+}
+// all rings start out at the starting tower
+pred ringsStartAtStartingTower {
+    some MStartingTower.Mtop
+    all r: MRing | r != MStartingTower.Mtop implies MStartingTower.Mtop -> r in ^Mbelow
+}
+// a move always guarantees that some ring is moved to a different stack
+pred oneRingMove {
+    always {
+        Mmove implies {
+            some r: MRing | some r.Mbelow implies r.Mbelow' != r.Mbelow
+        }
+    }
+}
+// a move always guarantees that some ring flips polarity
+pred oneRingChangePolarity {
+    always {
+        Mmove implies {
+            some r: MRing | some r.Mbelow implies r.pole' != r.pole
+        }
+    }
+}
+// the counter always increment on a move, and stays the same when doing nothing
+pred multipleRingsMove {
+    some disj r1, r2: MRing | r1.Mbelow' != r1.Mbelow and r2.Mbelow' != r2.Mbelow
+}
+// multiple rings change their polarity at once
+pred multipleRingsChangePolarity {
+    some disj r1, r2: MRing | r1.pole' != r1.pole and r2.pole' != r2.pole
 
-// test suite for Mtrace {
-//     assert orderAlwaysPreserved is necessary for Mtrace
-//     assert ringsEndAtEndingTower is necessary for Mtrace
-//     assert ringsStartAtStartingTower is necessary for Mtrace
-//     assert oneRingMove is necessary for Mtrace
-//     assert oneRingChangePolarity is necessary for Mtrace
-//     assert counterChangesProperly is necessary for Mtrace
-//     assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
-//     assert oneMoveTrace is sufficient for Mtrace
+}
+// there are fewer than 3 towers, and more than 1 ring in the model
+pred minTowers3 {
+    #{MTower} < 3
+    #{MRing} > 1
+}
+// eventually the first ring ends up on the third ring
+pred firstRingOnTopofThird {
+    eventually {
+        MRing1.Mbelow = MRing3
+    }
+}
+// eventually there is one ring per tower
+pred ringsSpreadOut {
+    eventually {
+        some disj r1, r2, r3: MRing | no r1.Mbelow and no r2.Mbelow and no r3.Mbelow
+    }
+}
 
-//     test expect {
-//         // basic sat test
-//         traceSat: {Mtrace} is sat
-//         // minimum number of towers needed for puzzle is 2
-//         minTowersTwo: {Mtrace and minTowers2} is unsat
-//         // multiple rings move at a time is invalid
-//         multRingsMove: {Mtrace and multipleRingsMove} is unsat
-//         // multiple rings change polarity is invalid
-//         multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
-//         // possible to stack first ring on top of third
-//         firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
-//         // possible to have ringsSpreadOut 
-//         ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
+test suite for Mtrace {
+    assert orderAlwaysPreserved is necessary for Mtrace
+    assert ringsEndAtEndingTower is necessary for Mtrace
+    assert ringsStartAtStartingTower is necessary for Mtrace
+    assert oneRingMove is necessary for Mtrace
+    assert oneRingChangePolarity is necessary for Mtrace
 
-//         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
-//         // Minimum moves: 4 for 2 Ring, 3 Tower
-//         // minTrace4For2R3T: {Mtrace and always MCounter.Mcounter < 4} for exactly 2 MRing, 3 MTower is unsat 
-//         // Minimum moves: 13
-//         // minTrace13For2R3T: {Mtrace and always MCounter.Mcounter < 13} for exactly 3 MRing, 3 MTower is unsat
-//         // Minimum moves: 7
-//         // minTrace13For2R3T: {Mtrace and always MCounter.Mcounter < 7} for exactly 3 MRing, 3 MTower is unsat
-//     }
-// }
+    test expect {
+        // basic sat test
+        traceSat: {Mtrace} is sat
+        // minimum number of towers needed for our model is 3
+        minTowersTwo: {Mtrace and minTowers3} is unsat
+        // multiple rings move at a time is invalid
+        multRingsMove: {Mtrace and multipleRingsMove} is unsat
+        // multiple rings change polarity is invalid
+        multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
+        // possible to stack first ring on top of third
+        firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
+        // possible to have ringsSpreadOut 
+        ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
+    }
+}

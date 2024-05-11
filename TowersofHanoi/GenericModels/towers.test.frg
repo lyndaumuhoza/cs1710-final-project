@@ -6,21 +6,27 @@ open "towersGeneric.frg"
 
 // PREDICATES FOR TESTING INIT
 
+// there is some ring whose order field links to itself
 pred someRingsLinkToSelf {
     some iden & ^order
 }
+// there is some ring whose below field links to itself
 pred someRingsLinkToSelfBelow {
     some iden & ^below
 }
+// all ring stacks (defined by below) follows the expected size constraint (defined by order)
 pred allRingInOrder {
     all r: Ring | some r.below implies r->r.below in ^order
 }
+// the starting tower has some top ring
 pred someStartingTop {
     some StartingTower.top
 }
+// all rings are in the starting tower
 pred allRingInStartTower {
     all r: Ring | r != StartingTower.top implies StartingTower.top -> r in ^order
 }
+// there is one ring in the starting tower and no rings elsewhere
 pred oneRingInStarting {
     #{Ring} = 1 and some StartingTower.top
     all t: Tower | t.top != StartingTower.top
@@ -74,16 +80,20 @@ test suite for init {
 
 // PREDICATES FOR TESTING WELLFORMED 
 
+// no rings are stacked 
 pred noBelows {
     no ^below
 }
+// if there is no pre-defined order, then there must be no stack
 pred noOrderNoBelow {
     no {^order} implies no {^below}
 }
+// rings are stacked in a way that exceeds possible order constraints
 pred orderSmallerThanBelow {
     #{^order} < #{^below}
     #{^ order} > 0 // int wrapping issue if not included
 }
+// there are no rings in the model
 pred noRings {
     #{Ring} = 0
 }
@@ -151,14 +161,16 @@ test suite for wellformed {
 
 // PREDICATES FOR TESTING MOVE
 
+// some tower loses its top ring
 pred oneTowerDecRing {
     some t: Tower | t.top' = t.top.below
 }
-
+// there are two towers for which the top of one became the top of the other
 pred ringMoveDiffTower {
     some disj t1, t2: Tower | t1.top' = t2.top
 }
-
+// assuming a move is made from initial stack, there is some ring who gets moved 
+// onto another stack
 pred onlyOneRingMove {
     init and move and #{Ring} > 1 implies {
         some r: Ring | {
@@ -167,13 +179,14 @@ pred onlyOneRingMove {
         }
     }
 }
-
+// given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred orderPreserved {
     wellformed and move implies {
         all r: Ring | no r.order implies no r.below
     }
 }
 
+// an example of moving the only ring in the model between two towers 
 pred oneRingTwoTowerMove {
     #{Ring} = 1
     #{Tower} = 2
@@ -188,7 +201,7 @@ pred oneRingTwoTowerMove {
         t2.top' = r1
     }
 }
-
+// three towers' top ring changes at once
 pred tooManyTowersChange {
     some disj t1, t2, t3: Tower | {
         t1.top' != t1.top
@@ -295,18 +308,23 @@ test suite for move {
 
 // PREDICATES FOR TESTING ENDSTATE 
 
+// all rings are stacked in the ending tower
 pred allRingsInEndTower {
     all r: Ring | r != EndingTower.top implies EndingTower.top -> r in ^below
 }
+// given a trace, it is expected that all rings are in order
 pred traceMustEndInOrder {
     {init and always move and eventually endState} implies allRingInOrder
 }
+// there is some ring in the starting tower
 pred someRingInStarting {
     some r: Ring | StartingTower.top = r
 }
+// there is some ring in the ending tower
 pred someRingInEndingTop {
     some EndingTower.top
 }
+// there is exactly one ring in the ending tower
 pred oneRingInEnding {
     #{Ring} = 1 and some EndingTower.top
     all t: Tower | t.top != EndingTower.top
@@ -377,19 +395,23 @@ test suite for endState {
 
 // PREDICATES FOR TESTING TRACE
 
+// the size order is always maintained
 pred orderAlwaysPreserved {
     always {
         all r: Ring | some r.below implies r->r.below in ^order
     }
 }
+// all rings end up in the end tower eventually
 pred ringsEndAtEndingTower {
     eventually some EndingTower.top 
     eventually {all r: Ring | r != EndingTower.top implies EndingTower.top -> r in ^below}
 }
+// all rings start out at the starting tower
 pred ringsStartAtStartingTower {
     some StartingTower.top
     all r: Ring | r != StartingTower.top implies StartingTower.top -> r in ^below
 }
+// a move always guarantees that some ring is moved to a different stack
 pred oneRingMove {
     always {
         move implies {
@@ -397,6 +419,7 @@ pred oneRingMove {
         }
     }
 }
+// the counter always increment on a move, and stays the same when doing nothing
 pred counterChangesProperly {
     always {
         totalMoves implies {
@@ -407,10 +430,12 @@ pred counterChangesProperly {
         }
     }
 }
+// there are fewer than 2 towers, and more than 1 ring in the model
 pred minTowers2 {
     #{Tower} < 2
     #{Ring} > 1
 }
+// a trace where there is only one ring, moved from starting to ending tower
 pred oneMoveTrace {
     #{Ring} = 1
     #{Tower} = 3
@@ -429,9 +454,11 @@ pred oneMoveTrace {
         Counter.counter = 1
     }
 }
+// some ring is moved
 pred ringMoving[r: Ring] {
     r.below' != r.below or (some disj t1, t2: Tower | t1.top = r and t2.top' = r)
 }
+// for a trace done in the minimum number of moves, the smallest ring is moved every other step
 pred smallestRingMovedEveryOtherTime {
     {always totalMoves until Counter.counter = 3 and always Counter.counter < 4} implies {
     some r: Ring | {
@@ -441,6 +468,7 @@ pred smallestRingMovedEveryOtherTime {
     }
     }
 }
+// eventually the first ring ends up on the third ring
 pred firstRingOnTopofThird {
     eventually {
         some disj r1, r2, r3: Ring | {
@@ -450,9 +478,20 @@ pred firstRingOnTopofThird {
         }
     }
 }
+// eventually there is one ring per tower
 pred ringsSpreadOut {
     eventually {
         some disj r1, r2, r3: Ring | no r1.below and no r2.below and no r3.below
+    }
+}
+// eventually all rings stacked, not in starting or ending tower
+pred ringsAllInMiddle {
+    eventually {
+        no StartingTower.top
+        no EndingTower.top
+        some t: Tower | t != StartingTower and t != EndingTower implies {
+            all r: Ring | (r != t.top) implies t.top -> r in ^below
+        }
     }
 }
 
@@ -478,6 +517,8 @@ test suite for trace {
         firstOnThird: {trace and firstRingOnTopofThird} is sat
         // possible that all rings are spread out
         ringsSpreadOutSat: {trace and ringsSpreadOut} is sat
+        // possible that all rings are stacked but not in starting or ending
+        ringsAllMiddle: {trace and ringsAllInMiddle} is sat
 
         // tests that take a long time to run (Alternatively, can verify with a run statement in model file):
         // minimum number of moves for 3 rings, 3 towers is 7

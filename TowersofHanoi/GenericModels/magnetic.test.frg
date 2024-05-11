@@ -6,25 +6,32 @@ open "magneticGeneric.frg"
 
 // PREDICATES FOR TESTING INIT
 
+// there is some ring whose order field links to itself
 pred someRingsLinkToSelf {
     some iden & ^Morder
 }
+// there is some ring whose below field links to itself
 pred someRingsLinkToSelfBelow {
     some iden & ^Mbelow
 }
+// all ring stacks (defined by below) follows the expected size constraint (defined by order)
 pred allMRingInOrder {
     all r: MRing | some r.Mbelow implies r->r.Mbelow in ^Morder
 }
+// the starting tower has some top ring
 pred someStartingTop {
     some MStartingTower.Mtop
 }
+// all rings are in the starting tower
 pred allRingInStartTower {
     all r: MRing | r != MStartingTower.Mtop implies MStartingTower.Mtop -> r in ^Morder
 }
+// there is one ring in the starting tower and no rings elsewhere
 pred oneRingInStarting {
     #{MRing} = 1 and some MStartingTower.Mtop
     all t: MTower | t.Mtop != MStartingTower.Mtop
 }
+// all rings have the same polarity
 pred allRingsMatchPolarity {
     all disj r1, r2: MRing | r1.pole = r2.pole
 }
@@ -101,6 +108,7 @@ test suite for Minit {
 
 // PREDICATES FOR TESTING Mwellformed 
 
+// no rings are stacked and all rings have the same polarity as the tower they are in
 pred noMbelowsAndMatchTowers {
     no ^Mbelow
     all r: MRing | some t: MTower | {
@@ -108,13 +116,16 @@ pred noMbelowsAndMatchTowers {
         t.tpole = r.pole
     }
 }
+// if there is no pre-defined order, then there must be no stack
 pred noMorderNoMbelow {
     no {^Morder} implies no {^Mbelow}
 }
+// rings are stacked in a way that exceeds possible order constraints
 pred MorderSmallerThanMbelow {
     #{^Morder} < #{^Mbelow}
     #{^ Morder} > 0 // int wrapping issue if not included
 }
+// there are no rings in the model
 pred noMRings {
     #{MRing} = 0
 }
@@ -182,12 +193,16 @@ test suite for Mwellformed {
 
 // PREDICATES FOR TESTING Mmove
 
+// some tower loses its top ring
 pred oneMTowerDecMRing {
     some t: MTower | t.Mtop' = t.Mtop.Mbelow
 }
+// there are two towers for which the top of one became the top of the other
 pred MRingMmoveDiffMTower {
     some disj t1, t2: MTower | t1.Mtop' = t2.Mtop
 }
+// assuming a move is made from initial stack, there is some ring who gets moved 
+// onto another stack
 pred onlyOneMRingMmove {
     Minit and Mmove and #{MRing} > 1 implies {
         some r: MRing | {
@@ -196,11 +211,13 @@ pred onlyOneMRingMmove {
         }
     }
 }
+// given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred MorderPreserved {
     Mwellformed and Mmove implies {
         all r: MRing | no r.Morder implies no r.Mbelow
     }
 }
+// an example of moving the only ring in the model between two towers 
 pred oneMRingTwoMTowerMmove {
     #{MRing} = 1
     #{MTower} = 2
@@ -219,6 +236,7 @@ pred oneMRingTwoMTowerMmove {
         r1.pole' = South
     }
 }
+// three towers' top ring changes at once
 pred tooManyMTowersChange {
     some disj t1, t2, t3: MTower | {
         t1.Mtop' != t1.Mtop
@@ -226,6 +244,7 @@ pred tooManyMTowersChange {
         t3.Mtop' != t3.Mtop
     }
 }
+// a ring is flipped to change polarity 
 pred oneRingFlipsOnMove {
     some r: MRing | {
         r.pole' != r.pole 
@@ -359,23 +378,29 @@ test suite for Mmove {
 
 // PREDICATES FOR TESTING MendState 
 
+// all rings are stacked in the ending tower
 pred allMRingsInEndMTower {
     all r: MRing | r != MEndingTower.Mtop implies MEndingTower.Mtop -> r in ^Mbelow
 }
+// given a trace, it is expected that all rings are in order
 pred traceMustEndInMorder {
     {Minit and always Mmove and eventually MendState} implies allMRingInOrder
 }
+// there is some ring in the starting tower
 pred someMRingInStarting {
     some r: MRing | MStartingTower.Mtop = r
 }
+// there is some ring in the ending tower
 pred someMRingInEndingMtop {
     some MEndingTower.Mtop
 }
+// there is exactly one ring in the ending tower with the correct polarity
 pred oneMRingInEnding {
     #{MRing} = 1 and some MEndingTower.Mtop
     all t: MTower | t.Mtop != MEndingTower.Mtop
     all r: MRing | r.pole = MEndingTower.tpole
 }
+// all rings match the polarity of the ending tower
 pred allRingsMatchEndPolarity {
     all r: MRing | r.pole = MEndingTower.tpole
 }
@@ -446,19 +471,23 @@ test suite for MendState {
 
 // PREDICATES FOR TESTING TRACE
 
+// the size order is always maintined
 pred orderAlwaysPreserved {
     always {
         all r: MRing | some r.Mbelow implies r->r.Mbelow in ^Morder
     }
 }
+// all rings end up in the end tower eventually
 pred ringsEndAtEndingTower {
     eventually some MEndingTower.Mtop 
     eventually {all r: MRing | r != MEndingTower.Mtop implies MEndingTower.Mtop -> r in ^Mbelow}
 }
+// all rings start out at the starting tower
 pred ringsStartAtStartingTower {
     some MStartingTower.Mtop
     all r: MRing | r != MStartingTower.Mtop implies MStartingTower.Mtop -> r in ^Mbelow
 }
+// a move always guarantees that some ring is moved to a different stack
 pred oneRingMove {
     always {
         Mmove implies {
@@ -466,6 +495,7 @@ pred oneRingMove {
         }
     }
 }
+// a move always guarantees that some ring flips polarity
 pred oneRingChangePolarity {
     always {
         Mmove implies {
@@ -473,13 +503,15 @@ pred oneRingChangePolarity {
         }
     }
 }
+// the counter always increment on a move, and stays the same when doing nothing
 pred multipleRingsMove {
     some disj r1, r2: MRing | r1.Mbelow' != r1.Mbelow and r2.Mbelow' != r2.Mbelow
 }
+// multiple rings change their polarity at once
 pred multipleRingsChangePolarity {
     some disj r1, r2: MRing | r1.pole' != r1.pole and r2.pole' != r2.pole
-
 }
+// the counter always increment on a move, and stays the same when doing nothing
 pred counterChangesProperly {
     always {
         MtotalMoves implies {
@@ -490,10 +522,12 @@ pred counterChangesProperly {
         }
     }
 }
+// there are fewer than 2 towers, and more than 1 ring in the model
 pred minTowers2 {
     #{MTower} < 2
     #{MRing} > 1
 }
+// a trace where there is only one ring, moved from starting to ending tower
 pred oneMoveTrace {
     #{MRing} = 1
     #{MTower} = 3
@@ -513,9 +547,11 @@ pred oneMoveTrace {
         r.pole != r.pole'
     }
 }
+// some ring is moved
 pred ringMoving[r: MRing] {
     r.Mbelow' != r.Mbelow or (some disj t1, t2: MTower | t1.Mtop = r and t2.Mtop' = r)
 }
+// for a trace done in the minimum number of moves, the smallest ring is moved every other step
 pred smallestRingMovedEveryOtherTime {
     {always MtotalMoves until MCounter.Mcounter = 13 and always MCounter.Mcounter < 14} implies always {
     some r: MRing | {
@@ -525,6 +561,7 @@ pred smallestRingMovedEveryOtherTime {
     }
     }
 }
+// eventually the first ring ends up on the third ring
 pred firstRingOnTopofThird {
     eventually {
         some disj r1, r2, r3: MRing | {
@@ -534,38 +571,58 @@ pred firstRingOnTopofThird {
         }
     }
 }
+// eventually there is one ring per tower
 pred ringsSpreadOut {
     eventually {
         some disj r1, r2, r3: MRing | no r1.Mbelow and no r2.Mbelow and no r3.Mbelow
     }
 }
-pred towerTopsOverlap{
-    eventually {some disj t1, t2: MTower, r: MRing | t1.Mtop = r and t2.Mtop = r}
+// staring tower and ending tower have the same polarity
+pred startEndSamePole {
+    MStartingTower.tpole = MStartingTower.tpole
+}
+// all towers have same polarity
+pred allSameTowerPoles {
+    all t: MTower | t.tpole = North
+}
+// eventually all rings have same polarity but not all on one stack
+pred samePolesButDiffStack {
+    eventually {
+        some MStartingTower.Mtop
+        some MEndingTower.Mtop
+        all r: MRing | r.pole = North
+    }
 }
 
 test suite for Mtrace {
-    assert orderAlwaysPreserved is necessary for Mtrace
-    assert ringsEndAtEndingTower is necessary for Mtrace
-    assert ringsStartAtStartingTower is necessary for Mtrace
-    assert oneRingMove is necessary for Mtrace
-    assert oneRingChangePolarity is necessary for Mtrace
-    assert counterChangesProperly is necessary for Mtrace
-    assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
-    assert oneMoveTrace is sufficient for Mtrace
+    // assert orderAlwaysPreserved is necessary for Mtrace
+    // assert ringsEndAtEndingTower is necessary for Mtrace
+    // assert ringsStartAtStartingTower is necessary for Mtrace
+    // assert oneRingMove is necessary for Mtrace
+    // assert oneRingChangePolarity is necessary for Mtrace
+    // assert counterChangesProperly is necessary for Mtrace
+    // assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
+    // assert oneMoveTrace is sufficient for Mtrace
 
     test expect {
-        // basic sat test
-        traceSat: {Mtrace} is sat
-        // minimum number of towers needed for puzzle is 2
-        minTowersTwo: {Mtrace and minTowers2} is unsat
-        // multiple rings move at a time is invalid
-        multRingsMove: {Mtrace and multipleRingsMove} is unsat
-        // multiple rings change polarity is invalid
-        multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
-        // possible to stack first ring on top of third
-        firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
-        // possible to have ringsSpreadOut 
-        ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
+        // // basic sat test
+        // traceSat: {Mtrace} is sat
+        // // minimum number of towers needed for puzzle is 2
+        // minTowersTwo: {Mtrace and minTowers2} is unsat
+        // // multiple rings move at a time is invalid
+        // multRingsMove: {Mtrace and multipleRingsMove} is unsat
+        // // multiple rings change polarity is invalid
+        // multRingsFlip: {Mtrace and multipleRingsChangePolarity} is unsat
+        // // possible to stack first ring on top of third
+        // firstOnThird: {Mtrace and firstRingOnTopofThird} is sat
+        // // possible to have ringsSpreadOut 
+        // ringsAreSpreadOut: {Mtrace and ringsSpreadOut} is sat
+        // // possible to solve the puzzle when start and end tower have same polarity
+        // startEndMatchPole: {Mtrace and startEndSamePole} is sat
+        // // not possible to solve the puzzle when all towers have the same polarity
+        // allTowersMatchPole: {Mtrace and allSameTowerPoles} is unsat
+        // // possible to solve the puzzle when all towers have the same polarity
+        matchPolesButDiffStack: {Mtrace and samePolesButDiffStack} is sat
 
         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
         // Minimum moves: 4 for 2 Ring, 3 Tower

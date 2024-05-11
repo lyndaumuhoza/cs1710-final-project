@@ -18,6 +18,14 @@ In this variation of the Towers of Hanoi, each ring has one of two colors. The i
 
 In this variation of the Towers of Hanoi, each ring has magnetic poles, with either the North side facing up or the South side facing up. The initial tower starts with all rings facing in the same direction. Everytime a ring is moved, the ring must be flipped. The goal is to get all the rings to another tower without allowing two rings to have the same pole facing each other (as this would prepel the rings). The basic size constraint still applies here as well.
 
+## Directory Structure
+- TowersofHanoi: contains files for Towers of Hanoi model
+  - GenericModels: folder that contains model and test files for all variations (basic, magnetic, bicolor). These models allow for varying number of Rings and Towers, and also has a Counter to keep track of minimum number of moves. Useful for looking at wider scope of traces.
+  - Models: folder that contains model and test files for all variations (basic, magnetic, bicolor). These models only allow for strictly 3 Rings and 3 Towers. Useful for optimizing runtime because less flexible.
+  - correspondence.test.frg: file that contains tests for our main goal of finding correspondence
+
+- Uno: contains files for initial Uno model
+
 ## Running our model
 For all models, there will be Tower sigs and Ring sigs. To clear up the graph, we suggest following these 
 steps:
