@@ -1,34 +1,36 @@
 #lang forge/temporal
-
-
 open "bicolorGeneric.frg"
-
 
 ---------------------------------------------------
 
-
 // PREDICATES FOR TESTING INIT
 
-
+// there is some ring whose order field links to itself
 pred someRingsLinkToSelf {
    some iden & ^Border
 }
+// there is some ring whose below field links to itself
 pred someRingsLinkToSelfBelow {
    some iden & ^Bbelow
 }
+// all ring stacks (defined by below) follows the expected size constraint (defined by order)
 pred allRingInOrder {
    all r: BRing | some r.Bbelow implies r->r.Bbelow in ^Border
 }
+// the starting tower has some top ring
 pred someStartingTop {
    some BStartingTower.Btop
 }
+// all rings are in the starting tower
 pred allRingInStartTower {
    all r: BRing | r != BStartingTower.Btop implies BStartingTower.Btop -> r in ^Border
 }
+// there is one ring in the starting tower and no rings elsewhere
 pred oneRingInStarting {
    #{BRing} = 1 and some BStartingTower.Btop
    all t: BTower | t.Btop != BStartingTower.Btop
 }
+// all rings should have alternating colors
 pred allRingsAlternatingColors {
    all disj r1, r2: BRing | {
        r1.Bbelow = r2 implies {
@@ -44,6 +46,7 @@ test suite for Binit {
    assert allRingInStartTower is necessary for Binit
    assert oneRingInStarting is sufficient for Binit
    assert allRingsAlternatingColors is necessary for Binit
+
    test expect {
        // basic sat test
        initSat: {Binit} is sat
@@ -55,9 +58,6 @@ test suite for Binit {
        someBelowCyclesInitUnsat: {Binit and someRingsLinkToSelfBelow} is unsat
        // no rings makes init unsat
        noRingsInitUnsat: {#{BRing}=0 and Binit} is unsat
-
-
-
 
        // three rings where all are in starting tower and in order
        initExThreeRing: {
@@ -73,7 +73,6 @@ test suite for Binit {
            }
        } for exactly 3 BRing is sat
 
-
        // two rings where all are in starting tower and not in order
        initExThreeRingUnordered: {
            some disj r1, r2: BRing | {
@@ -86,8 +85,6 @@ test suite for Binit {
            }
        } for exactly 2 BRing is unsat
 
-
-       // Tests for alternating colors
        // three rings where all are in starting tower, alternating colors and in order
        initExThreeRingAlternatingColors: {
            some disj r1, r2, r3: BRing | {
@@ -104,7 +101,6 @@ test suite for Binit {
                Binit
            }
        } for exactly 3 BRing is sat
-
 
        // three rings where all are in starting tower, and in order, but not alternating colors
        initExThreeRingNotAlternatingColors: {
@@ -124,41 +120,35 @@ test suite for Binit {
            }
        } for exactly 3 BRing is unsat
    }
-  
 }
-
-
-
 
 --------------------------------------------
 
-
 // PREDICATES FOR TESTING WELLFORMED
 
-
+// no rings are stacked 
 pred noBelows {
    no ^Bbelow
 }
+// if there is no pre-defined order, then there must be no stack
 pred noOrderNoBelow {
    no {^Border} implies no {^Bbelow}
 }
+// rings are stacked in a way that exceeds possible order constraints
 pred orderSmallerThanBelow {
    #{^Border} < #{^Bbelow}
    #{^ Border} > 0 // int wrapping issue if not included
 }
+// there are no rings in the model
 pred noRings {
    #{BRing} = 0
 }
-
-
-
 
 test suite for Bwellformed {
    assert Bwellformed is necessary for Btrace
    assert noBelows is sufficient for Bwellformed
    assert allRingsAlternatingColors is necessary for Bwellformed
    assert noRings is sufficient for Bwellformed
-
 
    test expect {
        // basic sat test
@@ -184,7 +174,6 @@ test suite for Bwellformed {
            }
        } for exactly 4 BRing is sat
 
-
        // wellformed example: rings all in order and in same tower
        wellformedFourRingSameTower: {
            some disj r1, r2, r3, r4: BRing, t: BTower | {
@@ -201,7 +190,6 @@ test suite for Bwellformed {
            }
        } for exactly 4 BRing is sat
 
-
        // not-wellformed example: rings out of order
        notWellformedThreeRing: {
            some disj r1, r2, r3: BRing | {
@@ -215,8 +203,6 @@ test suite for Bwellformed {
            }
        } for exactly 3 BRing is unsat
 
-
-       // Tests for alternating colors
        // wellformed example: rings all in order, alternating colors, and in same tower
        wellformedFourRingAlternatingColorSameTower: {
            some disj r1, r2, r3, r4: BRing, t: BTower | {
@@ -237,7 +223,6 @@ test suite for Bwellformed {
            }
        } for exactly 4 BRing is sat
 
-
        // not-wellformed example: rings all in order, not alternating colors, and in same tower
        wellformedFourRingNotAlternatingColorSameTower: {
            some disj r1, r2, r3, r4: BRing, t: BTower | {
@@ -257,32 +242,24 @@ test suite for Bwellformed {
                Bwellformed
            }
        } for exactly 4 BRing is unsat
-
-
    }
-
-
 }
-
-
 
 
 // --------------------------------------------
 
-
 // PREDICATES FOR TESTING MOVE
 
-
+// some tower loses its top ring
 pred oneTowerDecRing {
    some t: BTower | t.Btop' = t.Btop.Bbelow
 }
-
-
+// there are two towers for which the top of one became the top of the other
 pred ringMoveDiffTower {
    some disj t1, t2: BTower | t1.Btop' = t2.Btop
 }
-
-
+// assuming a move is made from initial stack, there is some ring which gets moved 
+// onto another stack
 pred onlyOneRingMove {
    Binit and Bmove and #{BRing} > 1 implies {
        some r: BRing | {
@@ -291,15 +268,13 @@ pred onlyOneRingMove {
        }
    }
 }
-
-
+// given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred orderPreserved {
    Bwellformed and Bmove implies {
        all r: BRing | no r.Border implies no r.Bbelow
    }
 }
-
-
+// given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred alternatingColorsPreserved {
    some disj t1, t2:BTower, r1:BRing {
        t1.Btop = r1
@@ -312,8 +287,7 @@ pred alternatingColorsPreserved {
        }
    }
 }
-
-
+// an example of moving the only ring in the model between two towers 
 pred oneRingTwoTowerMove {
    #{BRing} = 1
    #{BTower} = 2
@@ -328,8 +302,7 @@ pred oneRingTwoTowerMove {
        t2.Btop' = r1
    }
 }
-
-
+// three towers' top ring changes at once
 pred tooManyTowersChange {
    some disj t1, t2, t3: BTower | {
        t1.Btop' != t1.Btop
@@ -337,7 +310,6 @@ pred tooManyTowersChange {
        t3.Btop' != t3.Btop
    }
 }
-
 
 test suite for Bmove {
    assert oneTowerDecRing is necessary for Bmove
@@ -355,8 +327,6 @@ test suite for Bmove {
        moveOnetower: {Bmove and #{BTower} = 1} is unsat
        // too many towers change tops
        threeTowersChange: {Bmove and tooManyTowersChange} is unsat
-
-
        // move starting from initial stack
        initialMoveEx: {
            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
@@ -370,7 +340,6 @@ test suite for Bmove {
                no t2.Btop
                no t3.Btop
 
-
                t1.Btop' = r2
                t2.Btop' = r1
                no r1.Bbelow'
@@ -378,12 +347,10 @@ test suite for Bmove {
                no r3.Bbelow'
                no t3.Btop'
 
-
                Binit
                Bmove
            }
        } is sat
-
 
        // basic move moving smallest ring onto largest ring
        basicMoveEx: {
@@ -392,14 +359,12 @@ test suite for Bmove {
                r2.Border = r3
                no r3.Border
 
-
                t1.Btop = r2
                t2.Btop = r1
                t3.Btop = r3
                no r1.Bbelow
                no r2.Bbelow
                no r3.Bbelow
-
 
                t1.Btop' = r2
                no t2.Btop'
@@ -408,11 +373,9 @@ test suite for Bmove {
                no r2.Bbelow'
                no r3.Bbelow'
 
-
                Bmove
            }
        } is sat
-
 
        // move resulting in end state
        endingMoveEx: {
@@ -421,14 +384,12 @@ test suite for Bmove {
                r2.Border = r3
                no r3.Border
 
-
                no t1.Btop
                t2.Btop = r1
                no r1.Bbelow
                t3.Btop = r2
                r2.Bbelow = r3
                no r3.Bbelow
-
 
                no t1.Btop'
                no t2.Btop'
@@ -437,14 +398,11 @@ test suite for Bmove {
                r2.Bbelow' = r3
                no r3.Bbelow'
 
-
                Bmove
                next_state BendState
            }
        } is sat
 
-
-       // Tests for alternating colors
        // basic move moving smallest ring onto second largest ring and preserving alternating colors
        alternatingColorsBasicMoveEx: {
            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
@@ -452,11 +410,9 @@ test suite for Bmove {
                r2.Border = r3
                no r3.Border
 
-
                r1.col = Black
                r2.col = White
                r3.col = Black
-
 
                t1.Btop = r2
                t2.Btop = r1
@@ -471,11 +427,9 @@ test suite for Bmove {
                no r2.Bbelow'
                no r3.Bbelow'
 
-
                Bmove
            }
        } is sat
-
 
         // basic move moving smallest ring onto largest ring but they are the same color
        unsatAlternatingColorsBasicMoveEx: {
@@ -484,11 +438,9 @@ test suite for Bmove {
                r2.Border = r3
                no r3.Border
 
-
                r1.col = Black
                r2.col = White
                r3.col = Black
-
 
                t1.Btop = r2
                t2.Btop = r1
@@ -497,7 +449,6 @@ test suite for Bmove {
                no r2.Bbelow
                no r3.Bbelow
 
-
                t1.Btop' = r2
                no t2.Btop'
                t3.Btop' = r1
@@ -505,51 +456,45 @@ test suite for Bmove {
                no r2.Bbelow'
                no r3.Bbelow'
 
-
                Bmove
            }
        } is unsat
    }
 
-
 }
 
 
-
+// ----------------------------------
 
 // PREDICATES FOR TESTING ENDSTATE
 
-
+// all rings are stacked in the ending tower
 pred allRingsInEndTower {
    all r: BRing | r != BEndingTower.Btop implies BEndingTower.Btop -> r in ^Bbelow
 }
+// given a trace, it is expected that all rings are in order
 pred traceMustEndInOrder {
    {Binit and always Bmove and eventually BendState} implies allRingInOrder
 }
+// there is some ring in the starting tower
 pred someRingInStarting {
    some r: BRing | BStartingTower.Btop = r
 }
+// there is some ring in the ending tower
 pred someRingInEndingTop {
    some BEndingTower.Btop
 }
+// there is exactly one ring in the ending tower with the correct polarity
 pred oneRingInEnding {
    #{BRing} = 1 and some BEndingTower.Btop
    all t: BTower | t.Btop != BEndingTower.Btop
 }
 
-
-
-
-
-
 test suite for BendState {
-
-
    assert allRingsInEndTower is necessary for BendState
    assert traceMustEndInOrder is necessary for BendState
    assert someRingInEndingTop is necessary for BendState
    assert oneRingInEnding is sufficient for BendState
-
 
    test expect {
        // basic sat test
@@ -572,7 +517,6 @@ test suite for BendState {
            }
        } for exactly 3 BRing is sat
 
-
        // three rings where all are in ending tower but not in order
        // (sat but don't expect this in a trace)
        endStateExThreeRingUnordered: {
@@ -588,9 +532,6 @@ test suite for BendState {
            }
        } for exactly 3 BRing is sat
 
-
-
-
        // three rings where all are in ending tower but there is a cycle in below
        // (sat but don't expect this in a trace)
        endStateExThreeRingCycled: {
@@ -605,7 +546,6 @@ test suite for BendState {
                BendState
            }
        } for exactly 3 BRing is sat
-
 
        // Tests for alternating colors
        // three rings where all are in ending tower and in order
@@ -624,7 +564,6 @@ test suite for BendState {
                BendState
            }
        } for exactly 3 BRing is sat
-
 
        // three rings where all are in ending tower and in order
        unsatEndStateExThreeRingAlternatingColors: {
@@ -646,28 +585,27 @@ test suite for BendState {
    }
 }
 
-
-
-
---------------------------------------------
-
+// --------------------------------------------
 
 // PREDICATES FOR TESTING TRACE
 
-
+// the size order is always maintained
 pred orderAlwaysPreserved {
    always {
        all r: BRing | some r.Bbelow implies r->r.Bbelow in ^Border
    }
 }
+// all rings end up in the end tower eventually
 pred ringsEndAtEndingTower {
    eventually some BEndingTower.Btop
    eventually {all r: BRing | r != BEndingTower.Btop implies BEndingTower.Btop -> r in ^Bbelow}
 }
+// all rings start out at the starting tower
 pred ringsStartAtStartingTower {
    some BStartingTower.Btop
    all r: BRing | r != BStartingTower.Btop implies BStartingTower.Btop -> r in ^Bbelow
 }
+// a move always guarantees that some ring is moved to a different stack
 pred oneRingMove {
    always {
        Bmove implies {
@@ -675,7 +613,7 @@ pred oneRingMove {
        }
    }
 }
-
+// the counter always increment on a move, and stays the same when doing nothing
 pred counterChangesProperly {
     always {
         BtotalMoves implies {
@@ -686,22 +624,24 @@ pred counterChangesProperly {
         }
     }
 }
-
-
+// pred for tests where the trace length is expected to be less than 7
 pred traceLessThan7 {
     always BCounter.bcounter < 7
 }
+// pred for tests where the trace length is expected to be less than 5
 pred traceLessThan5 {
     always BCounter.bcounter < 5
 }
+// pred for tests where the trace length is expected to be less than 3
 pred traceLessThan3 {
     always BCounter.bcounter < 3
 }
-
+// there are fewer than 2 towers, and more than 1 ring in the model
 pred minTowers2 {
    #{BTower} < 2
    #{BRing} > 1
 }
+// a trace where there is only one ring, moved from starting to ending tower
 pred oneMoveTrace {
    #{BRing} = 1
    #{BTower} = 3
@@ -720,7 +660,6 @@ pred oneMoveTrace {
        BCounter.bcounter = 1
    }
 }
-
 // alternating colors are preserved
 pred validMoveTrace {
     #{BRing} = 3
@@ -753,10 +692,11 @@ pred validMoveTrace {
         BCounter.bcounter = 1
    }
 }
-
+// some ring is moved
 pred ringMoving[r: BRing] {
     r.Bbelow' != r.Bbelow or (some disj t1, t2: BTower | t1.Btop = r and t2.Btop' = r)
 }
+// for a trace done in the minimum number of moves, the smallest ring is moved every other step
 pred smallestRingMovedEveryOtherTime {
     {always BtotalMoves until BCounter.bcounter = 3 and always BCounter.bcounter < 4} implies {
     some r: BRing | {
@@ -766,11 +706,11 @@ pred smallestRingMovedEveryOtherTime {
     }
     }
 }
-
+// only one ring can move at a time
 pred multipleRingsMove {
     some disj r1, r2: BRing | r1.Bbelow' != r1.Bbelow and r2.Bbelow' != r2.Bbelow
 }
-
+// eventually the first ring ends up on the third ring
 pred firstRingOnTopofThird {
     eventually {
         some disj r1, r2, r3: BRing | {
@@ -795,7 +735,6 @@ test suite for Btrace {
     assert oneMoveTrace is sufficient for Btrace
     assert validMoveTrace is sufficient for Btrace
 
-
     test expect {
         // too many tops change (meaning more than one ring is moved)
         tooManyTowersTopChange: {tooManyTowersChange and Btrace} is unsat
@@ -810,12 +749,12 @@ test suite for Btrace {
         // ring 1 can not be on top of ring 3 because they are the same color
         alterrnatingColorsinvalid: {Btrace and firstRingOnTopofThird} is unsat
 
-        // tests that take a long time to run (but can verify with a run statement):
-        // minimum number of moves for 3 rings, 3 towers is 7
-        minTraceThreeRings: {Btrace and traceLessThan7} for exactly 3 BRing, 3 BTower is unsat
-        // minimum number of moves for 3 rings, 4 towers is 5
-        minTraceThreeRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
-        // minimum number of moves for 4 rings, 4 towers is 9
-        minTraceFourRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
+        // // tests that take a long time to run (but can verify with a run statement):
+        // // minimum number of moves for 3 rings, 3 towers is 7
+        // minTraceThreeRings: {Btrace and traceLessThan7} for exactly 3 BRing, 3 BTower is unsat
+        // // minimum number of moves for 3 rings, 4 towers is 5
+        // minTraceThreeRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
+        // // minimum number of moves for 4 rings, 4 towers is 9
+        // minTraceFourRingsFourTowers: {Btrace and traceLessThan5} for exactly 3 BRing, 4 BTower is unsat
     }
 }
