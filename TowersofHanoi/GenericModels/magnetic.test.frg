@@ -571,7 +571,7 @@ pred oneMoveTrace {
         no r.Mbelow'
         no r.Morder
         MCounter.Mcounter = 0
-        MCounter.Mcounter = 1
+        MCounter.Mcounter' = 1
         r.pole != r.pole'
     }
 }
@@ -630,7 +630,6 @@ test suite for Mtrace {
     assert oneRingChangePolarity is necessary for Mtrace
     assert counterChangesProperly is necessary for Mtrace
     assert smallestRingMovedEveryOtherTime is necessary for Mtrace for exactly 3 MRing, 3 MTower, 5 Int
-    assert oneMoveTrace is sufficient for Mtrace
 
     test expect {
         //  basic sat test
@@ -651,6 +650,8 @@ test suite for Mtrace {
         allTowersMatchPole: {Mtrace and allSameTowerPoles} is unsat
         // possible to solve the puzzle when all towers have the same polarity
         matchPolesButDiffStack: {Mtrace and samePolesButDiffStack} is sat
+        // possible to have one move trace
+        oneMoveSat: {Mtrace and oneMoveTrace} is sat
 
         // Tests take a long time to run: (Alternatively, can verify using the run statements in the model files)
         // Minimum moves: 4 for 2 Ring, 3 Tower
