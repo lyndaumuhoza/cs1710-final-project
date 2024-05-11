@@ -67,7 +67,6 @@ pred Bwellformed {
   // below must always follow the same sequence set by order
   {^Bbelow in ^Border}
 
-
   all r: BRing | {
       some r.Bbelow implies {
           r.col != r.Bbelow.col
@@ -145,7 +144,7 @@ pred Btrace {
   Binit and always Bwellformed and always {BtotalMoves or BdoNothing} and eventually BendState
 }
 
-
+// Trace for correspondace testing purposes
 pred BtraceNotWell {
   Binit and always BmoveNotWell and eventually BendState
 }
