@@ -20,7 +20,7 @@ In this variation of the Towers of Hanoi, each ring has one of two colors. The i
 In this variation of the Towers of Hanoi, each ring has magnetic poles, with either the North side facing up or the South side facing up. The initial tower starts with all rings facing in the same direction. Everytime a ring is moved, the ring must be flipped. The goal is to get all the rings to another tower without allowing two rings to have the same pole facing each other (as this would prepel the rings). The basic size constraint still applies here as well.
 
 ### Demo Video
-To view our demo video, click <a href="https://drive.google.com/drive/folders/1qcYuzE15HGw3t8fxESK-cE-88l8aIY73?usp=sharing"> here! </a>
+To view our demo video, click <a href="https://drive.google.com/drive/folders/1qcYuzE15HGw3t8fxESK-cE-88l8aIY73?usp=sharing"> here! </a> (Our video file was too big to upload to Gradescope directly)
 
 ## Directory Structure
 
