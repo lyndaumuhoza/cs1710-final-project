@@ -92,23 +92,6 @@ pred Bmove {
 }
 
 
-// predicate for BtraceNotWell for testing correspondance
-pred BmoveNotWell {
-  some disj t1, t2:BTower, r1:BRing {
-      t1.Btop = r1
-      t2.Btop' = r1
-      r1.Bbelow' = t2.Btop
-      t1.Btop' = r1.Bbelow
-      all t:BTower | (t != t1 and t != t2) implies t.Btop' = t.Btop
-      all r: BRing | r != r1 implies {
-          r.Bbelow' = r.Bbelow // all other rings stay the same
-      }
-  }
-}
-
-
-
-
 // Allows for a transition where nothing is changed. Need this to ensure counter
 // is able to stop in lasso trace.
 pred BdoNothing {
@@ -137,11 +120,6 @@ pred BendState {
 // A trace that solves the puzzle from init to endState
 pred Btrace {
   Binit and always Bwellformed and always {BtotalMoves or BdoNothing} and eventually BendState
-}
-
-// Trace for correspondace testing purposes
-pred BtraceNotWell {
-  Binit and always BmoveNotWell and eventually BendState
 }
 
 

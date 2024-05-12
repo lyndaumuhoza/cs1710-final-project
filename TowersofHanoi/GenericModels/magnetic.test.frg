@@ -185,26 +185,41 @@ test suite for Mwellformed {
                 Mwellformed
             }
         } for exactly 3 MRing is unsat
-        
+
+        // Mwellformed non-example: MRings don't match polarity 
+        MwellformedFourRingBadPole: {
+            some disj r1, r2, r3, r4: MRing | {
+                r1.Mbelow = r2 
+                no r2.Mbelow
+                no r3.Mbelow
+                no r4.Mbelow
+                r1.Morder = r2
+                r2.Morder = r3
+                r3.Morder = r4
+                no r4.Morder
+                r1.pole != r2.pole
+                Mwellformed
+            }
+        } for exactly 4 MRing, 3 MTower is unsat
     }
 }
 
 // --------------------------------------------
 
-// PREDICATES FOR TESTING Mmove
+// PREDICATES FOR TESTING MtotalMoves
 
 // some tower loses its top ring
 pred oneMTowerDecMRing {
     some t: MTower | t.Mtop' = t.Mtop.Mbelow
 }
 // there are two towers for which the top of one became the top of the other
-pred MRingMmoveDiffMTower {
+pred MRingMtotalMovesDiffMTower {
     some disj t1, t2: MTower | t1.Mtop' = t2.Mtop
 }
 // assuming a move is made from initial stack, there is some ring who gets moved 
 // onto another stack
-pred onlyOneMRingMmove {
-    Minit and Mmove and #{MRing} > 1 implies {
+pred onlyOneMRingMtotalMoves {
+    Minit and MtotalMoves and #{MRing} > 1 implies {
         some r: MRing | {
             r.Mbelow' != r.Mbelow 
             all r1: MRing | r1 != r implies r1.Mbelow' = r1.Mbelow
@@ -213,12 +228,12 @@ pred onlyOneMRingMmove {
 }
 // given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred MorderPreserved {
-    Mwellformed and Mmove implies {
+    Mwellformed and MtotalMoves implies {
         all r: MRing | no r.Morder implies no r.Mbelow
     }
 }
 // an example of moving the only ring in the model between two towers 
-pred oneMRingTwoMTowerMmove {
+pred oneMRingTwoMTowerMtotalMoves {
     #{MRing} = 1
     #{MTower} = 2
     some disj r1: MRing, t1, t2: MTower | {
@@ -234,6 +249,7 @@ pred oneMRingTwoMTowerMmove {
         no t1.Mtop'
         t2.Mtop' = r1
         r1.pole' = South
+        MCounter.Mcounter' = add[MCounter.Mcounter, 1]
     }
 }
 // three towers' top ring changes at once
@@ -252,24 +268,24 @@ pred oneRingFlipsOnMove {
     }
 }
 
-test suite for Mmove {
-    assert oneMTowerDecMRing is necessary for Mmove
-    assert MRingMmoveDiffMTower is necessary for Mmove
-    assert onlyOneMRingMmove is necessary for Mmove
-    assert MorderPreserved is necessary for Mmove
-    assert oneRingFlipsOnMove is necessary for Mmove
-    assert oneMRingTwoMTowerMmove is sufficient for Mmove
+test suite for MtotalMoves {
+    assert oneMTowerDecMRing is necessary for MtotalMoves
+    assert MRingMtotalMovesDiffMTower is necessary for MtotalMoves
+    assert onlyOneMRingMtotalMoves is necessary for MtotalMoves
+    assert MorderPreserved is necessary for MtotalMoves
+    assert oneRingFlipsOnMove is necessary for MtotalMoves
+    assert oneMRingTwoMTowerMtotalMoves is sufficient for MtotalMoves
 
     test expect {
         // basic sat test
-        MmoveSat: {Mmove} is sat
-        // Mmove doesn't work with only one MTower
-        MmoveOneMTower: {Mmove and #{MTower} = 1} is unsat
+        MtotalMovesSat: {MtotalMoves} is sat
+        // MtotalMoves doesn't work with only one MTower
+        MtotalMovesOneMTower: {MtotalMoves and #{MTower} = 1} is unsat
         // too many MTowers change Mtops
-        threeMTowersChange: {Mmove and tooManyMTowersChange} is unsat
+        threeMTowersChange: {MtotalMoves and tooManyMTowersChange} is unsat
 
-        // Mmove starting from Minitial stack
-        MinitialMmoveEx: {
+        // MtotalMoves starting from Minitial stack
+        MinitialMtotalMovesEx: {
             some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
                 t1.Mtop = r1
                 r1.Mbelow = r2
@@ -296,14 +312,15 @@ test suite for Mmove {
                 r2.pole' = North
                 r3.pole' = North
                 r1.pole' = South
+                MCounter.Mcounter' = add[MCounter.Mcounter, 1]
 
                 Minit
-                Mmove
+                MtotalMoves
             } 
         } is sat
 
-        // basic Mmove moving smallest MRing onto largest MRing
-        basicMmoveEx: {
+        // basic MtotalMoves moving smallest MRing onto largest MRing
+        basicMtotalMovesEx: {
             some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
                 r1.Morder = r2
                 r2.Morder = r3
@@ -332,13 +349,14 @@ test suite for Mmove {
                 r2.pole' = North
                 r3.pole' = South
                 r1.pole' = South
+                MCounter.Mcounter' = add[MCounter.Mcounter, 1]
 
-                Mmove
+                MtotalMoves
             }
         } is sat
 
-        // Mmove resulting in end state
-        endingMmoveEx: {
+        // MtotalMoves resulting in end state
+        endingMtotalMovesEx: {
             some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
                 r1.Morder = r2
                 r2.Morder = r3
@@ -366,11 +384,194 @@ test suite for Mmove {
                 r1.pole' = South
                 r2.pole' = South
                 r3.pole' = South
+                MCounter.Mcounter' = add[MCounter.Mcounter, 1]
 
-                Mmove
+                MtotalMoves
                 next_state MendState
             } 
         } is sat
+    }
+}
+
+--------------------------------------------
+
+// PREDICATES FOR TESTING DONOTHING
+
+// rings don't change "below" order
+pred allBelowStaysSame {
+    all r: MRing | r.Mbelow' = r.Mbelow
+}
+// tower tops don't change
+pred allTowerTopsStaySame {
+    all t: MTower | t.Mtop' = t.Mtop
+}
+// counter stays the same
+pred counterStaysSame {
+    MCounter.Mcounter' = MCounter.Mcounter
+}
+// one ring stays in place
+pred oneRingStays {
+    #{MRing} = 1
+    some r: MRing | MEndingTower.Mtop = r and MEndingTower.Mtop' = r and r.Mbelow' = r.Mbelow and r.pole' = r.pole
+    all t: MTower | t != MEndingTower implies t.Mtop' = t.Mtop
+    MCounter.Mcounter = MCounter.Mcounter'
+}
+// rings not correctly ordered
+pred unorderedRings {
+    some disj r1, r2: MRing | r1.Morder = r2 and r2.Mbelow = r1
+}
+// below (which defines ring stack) changes
+pred belowChanges {
+    ^Mbelow != ^Mbelow'
+}
+
+test suite for MdoNothing {
+    assert allBelowStaysSame is necessary for MdoNothing
+    assert allTowerTopsStaySame is necessary for MdoNothing
+    assert counterStaysSame is necessary for MdoNothing
+    assert oneRingStays is sufficient for MdoNothing
+
+    test expect {
+        //basic sat test
+        doNothingSat: {MdoNothing} is sat
+        // not possible to do transitions at once
+        twoTransitionsAtOnce: {MdoNothing and MtotalMoves} is unsat
+        // possible to do nothing with incorrect order 
+        unorderedDoNothing: {unorderedRings and MdoNothing} is sat
+        // not possible for below to change if doing nothing
+        belowChangesUnsat: {MdoNothing and belowChanges} is unsat
+        // do nothing example: all three rings stay in place 
+        doNothingEx: {
+            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
+                r1.Morder = r2
+                r2.Morder = r3
+                no r3.Morder
+
+                no t1.Mtop
+                t2.Mtop = r1
+                no r1.Mbelow
+                t3.Mtop = r2
+                r2.Mbelow = r3
+                no r3.Mbelow
+                r1.pole = North
+                r2.pole = South
+                r3.pole = South
+
+                no t1.Mtop'
+                t2.Mtop' = r1
+                no r1.Mbelow'
+                t3.Mtop' = r2
+                r2.Mbelow' = r3
+                no r3.Mbelow'
+                r1.pole' = North
+                r2.pole' = South
+                r3.pole' = South
+
+                MCounter.Mcounter' = MCounter.Mcounter
+
+                MdoNothing
+            }
+        } for exactly 3 MRing, 3 MTower is sat
+
+                
+        // do nothing non-example: ring moves to another tower
+        doNothingBadMove: {
+            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
+                r1.Morder = r2
+                r2.Morder = r3
+                no r3.Morder
+
+                no t1.Mtop
+                t2.Mtop = r1
+                no r1.Mbelow
+                t3.Mtop = r2
+                r2.Mbelow = r3
+                no r3.Mbelow
+
+                no t1.Mtop'
+                no t2.Mtop'
+                t3.Mtop' = r1
+                r1.Mbelow' = r2
+                r2.Mbelow' = r3
+                no r3.Mbelow'
+
+                r1.pole = North
+                r2.pole = South
+                r3.pole = South
+                r1.pole' = North
+                r2.pole' = South
+                r3.pole' = South
+                MCounter.Mcounter' = MCounter.Mcounter
+
+                MdoNothing
+            }
+        } for exactly 3 MRing, 3 MTower is unsat
+
+        // do nothing non-example: counter increments
+        doNothingBadCounter: {
+            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
+                r1.Morder = r2
+                r2.Morder = r3
+                no r3.Morder
+
+                no t1.Mtop
+                t2.Mtop = r1
+                no r1.Mbelow
+                t3.Mtop = r2
+                r2.Mbelow = r3
+                no r3.Mbelow
+                
+                no t1.Mtop'
+                t2.Mtop' = r1
+                no r1.Mbelow'
+                t3.Mtop' = r2
+                r2.Mbelow' = r3
+                no r3.Mbelow'
+
+                r1.pole = North
+                r2.pole = South
+                r3.pole = South
+                r1.pole' = North
+                r2.pole' = South
+                r3.pole' = South
+                MCounter.Mcounter' = add[MCounter.Mcounter, 1]
+
+                MdoNothing
+            }
+        } for exactly 3 MRing, 3 MTower is unsat
+
+        // do nothing non-example: pole changes
+        doNothingBadPole: {
+            some disj r1, r2, r3: MRing, t1, t2, t3: MTower | {
+                r1.Morder = r2
+                r2.Morder = r3
+                no r3.Morder
+
+                no t1.Mtop
+                t2.Mtop = r1
+                no r1.Mbelow
+                t3.Mtop = r2
+                r2.Mbelow = r3
+                no r3.Mbelow
+                
+                no t1.Mtop'
+                t2.Mtop' = r1
+                no r1.Mbelow'
+                t3.Mtop' = r2
+                r2.Mbelow' = r3
+                no r3.Mbelow'
+
+                r1.pole = North
+                r2.pole = South
+                r3.pole = South
+                r1.pole' = South
+                r2.pole' = South
+                r3.pole' = South
+                MCounter.Mcounter' =  MCounter.Mcounter'
+
+                MdoNothing
+            }
+        } for exactly 3 MRing, 3 MTower is unsat
     }
 }
 
@@ -384,7 +585,7 @@ pred allMRingsInEndMTower {
 }
 // given a trace, it is expected that all rings are in order
 pred traceMustEndInMorder {
-    {Minit and always Mmove and eventually MendState} implies allMRingInOrder
+    {Minit and always MtotalMoves and eventually MendState} implies allMRingInOrder
 }
 // there is some ring in the starting tower
 pred someMRingInStarting {
@@ -518,7 +719,7 @@ pred ringsStartAtStartingTower {
 // a move always guarantees that some ring is moved to a different stack
 pred oneRingMove {
     always {
-        Mmove implies {
+        MtotalMoves implies {
             some r: MRing | some r.Mbelow implies r.Mbelow' != r.Mbelow
         }
     }
@@ -526,7 +727,7 @@ pred oneRingMove {
 // a move always guarantees that some ring flips polarity
 pred oneRingChangePolarity {
     always {
-        Mmove implies {
+        MtotalMoves implies {
             some r: MRing | some r.Mbelow implies r.pole' != r.pole
         }
     }

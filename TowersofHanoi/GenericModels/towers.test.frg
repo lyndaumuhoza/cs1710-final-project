@@ -169,19 +169,19 @@ pred oneTowerDecRing {
 pred ringMoveDiffTower {
     some disj t1, t2: Tower | t1.top' = t2.top
 }
-// assuming a move is made from initial stack, there is some ring who gets moved 
+// assuming a totalMoves is made from initial stack, there is some ring who gets totalMovesd 
 // onto another stack
 pred onlyOneRingMove {
-    init and move and #{Ring} > 1 implies {
+    init and totalMoves and #{Ring} > 1 implies {
         some r: Ring | {
             r.below' != r.below 
             all r1: Ring | r1 != r implies r1.below' = r1.below
         }
     }
 }
-// given a wellormed move, if there is no pre-defined order then there cannot be a stack
+// given a wellormed totalMoves, if there is no pre-defined order then there cannot be a stack
 pred orderPreserved {
-    wellformed and move implies {
+    wellformed and totalMoves implies {
         all r: Ring | no r.order implies no r.below
     }
 }
@@ -199,6 +199,8 @@ pred oneRingTwoTowerMove {
         no r1.below'
         no t1.top'
         t2.top' = r1
+        Counter.counter = 0
+        Counter.counter' = 1
     }
 }
 // three towers' top ring changes at once
@@ -210,22 +212,22 @@ pred tooManyTowersChange {
     }
 }
 
-test suite for move {
-    assert oneTowerDecRing is necessary for move
-    assert ringMoveDiffTower is necessary for move
-    assert onlyOneRingMove is necessary for move
-    assert orderPreserved is necessary for move
-    assert oneRingTwoTowerMove is sufficient for move
+test suite for totalMoves {
+    assert oneTowerDecRing is necessary for totalMoves
+    assert ringMoveDiffTower is necessary for totalMoves
+    assert onlyOneRingMove is necessary for totalMoves
+    assert orderPreserved is necessary for totalMoves
+    assert oneRingTwoTowerMove is sufficient for totalMoves
 
     test expect {
         // basic sat test
-        moveSat: {move} is sat
-        // move doesn't work with only one tower
-        moveOnetower: {move and #{Tower} = 1} is unsat
+        totalMovesSat: {totalMoves} is sat
+        // totalMoves doesn't work with only one tower
+        totalMovesOnetower: {totalMoves and #{Tower} = 1} is unsat
         // too many towers change tops
-        threeTowersChange: {move and tooManyTowersChange} is unsat
+        threeTowersChange: {totalMoves and tooManyTowersChange} is unsat
 
-        // move starting from initial stack
+        // totalMoves starting from initial stack
         initialMoveEx: {
             some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
                 t1.top = r1
@@ -244,13 +246,15 @@ test suite for move {
                 r2.below' = r3
                 no r3.below'
                 no t3.top'
+                Counter.counter = 0
+                Counter.counter' = 1
 
                 init
-                move
+                totalMoves
             } 
         } is sat
 
-        // basic move moving smallest ring onto largest ring
+        // basic totalMoves moving smallest ring onto largest ring
         basicMoveEx: {
             some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
                 r1.order = r2
@@ -270,12 +274,13 @@ test suite for move {
                 r1.below' = r3
                 no r2.below'
                 no r3.below'
+                Counter.counter' = add[Counter.counter, 1]
 
-                move
+                totalMoves
             }
         } is sat
 
-        // move resulting in end state
+        // totalMoves resulting in end state
         endingMoveEx: {
             some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
                 r1.order = r2
@@ -295,13 +300,144 @@ test suite for move {
                 r1.below' = r2
                 r2.below' = r3
                 no r3.below'
+                Counter.counter' = add[Counter.counter, 1]
 
-                move
+                totalMoves
                 next_state endState
             } 
         } is sat
     }
 }
+
+--------------------------------------------
+
+// PREDICATES FOR TESTING DONOTHING
+
+// rings don't change "below" order
+pred allBelowStaysSame {
+    all r: Ring | r.below' = r.below
+}
+// tower tops don't change
+pred allTowerTopsStaySame {
+    all t: Tower | t.top' = t.top
+}
+// counter stays the same
+pred counterStaysSame {
+    Counter.counter' = Counter.counter
+}
+// one ring stays in place
+pred oneRingStays {
+    #{Ring} = 1
+    some r: Ring | EndingTower.top = r and EndingTower.top' = r and r.below' = r.below
+    all t: Tower | t != EndingTower implies t.top' = t.top
+    Counter.counter = Counter.counter'
+}
+// rings not correctly ordered
+pred unorderedRings {
+    some disj r1, r2: Ring | r1.order = r2 and r2.below = r1
+}
+// below (which defines ring stack) changes
+pred belowChanges {
+    ^below != ^below'
+}
+
+test suite for doNothing {
+    assert allBelowStaysSame is necessary for doNothing
+    assert allTowerTopsStaySame is necessary for doNothing
+    assert counterStaysSame is necessary for doNothing
+    assert oneRingStays is sufficient for doNothing
+
+    test expect {
+        //basic sat test
+        doNothingSat: {doNothing} is sat
+        // not possible to do transitions at once
+        twoTransitionsAtOnce: {doNothing and totalMoves} is unsat
+        // possible to do nothing with incorrect order 
+        unorderedDoNothing: {unorderedRings and doNothing} is sat
+        // not possible for below to change if doing nothing
+        belowChangesUnsat: {doNothing and belowChanges} is unsat
+        // do nothing example: all three rings stay in place 
+        doNothingEx: {
+            some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
+                r1.order = r2
+                r2.order = r3
+                no r3.order
+
+                no t1.top
+                t2.top = r1
+                no r1.below
+                t3.top = r2
+                r2.below = r3
+                no r3.below
+
+                no t1.top'
+                t2.top' = r1
+                no r1.below'
+                t3.top' = r2
+                r2.below' = r3
+                no r3.below'
+                Counter.counter' = Counter.counter
+
+                doNothing
+            }
+        } for exactly 3 Ring, 3 Tower is sat
+
+                
+        // do nothing non-example: ring moves to another tower
+        doNothingBadMove: {
+            some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
+                r1.order = r2
+                r2.order = r3
+                no r3.order
+
+                no t1.top
+                t2.top = r1
+                no r1.below
+                t3.top = r2
+                r2.below = r3
+                no r3.below
+
+                no t1.top'
+                no t2.top'
+                t3.top' = r1
+                r1.below' = r2
+                r2.below' = r3
+                no r3.below'
+                Counter.counter' = Counter.counter
+
+                doNothing
+            }
+        } for exactly 3 Ring, 3 Tower is unsat
+
+        // do nothing non-example: counter increments
+        doNothingBadCounter: {
+            some disj r1, r2, r3: Ring, t1, t2, t3: Tower | {
+                r1.order = r2
+                r2.order = r3
+                no r3.order
+
+                no t1.top
+                t2.top = r1
+                no r1.below
+                t3.top = r2
+                r2.below = r3
+                no r3.below
+                
+                no t1.top'
+                t2.top' = r1
+                no r1.below'
+                t3.top' = r2
+                r2.below' = r3
+                no r3.below'
+                Counter.counter' = add[Counter.counter, 1]
+
+                doNothing
+            }
+        } for exactly 3 Ring, 3 Tower is unsat
+    }
+}
+
+
 
 
 --------------------------------------------
@@ -314,7 +450,7 @@ pred allRingsInEndTower {
 }
 // given a trace, it is expected that all rings are in order
 pred traceMustEndInOrder {
-    {init and always move and eventually endState} implies allRingInOrder
+    {init and always totalMoves and eventually endState} implies allRingInOrder
 }
 // there is some ring in the starting tower
 pred someRingInStarting {
@@ -411,15 +547,15 @@ pred ringsStartAtStartingTower {
     some StartingTower.top
     all r: Ring | r != StartingTower.top implies StartingTower.top -> r in ^below
 }
-// a move always guarantees that some ring is moved to a different stack
+// a totalMoves always guarantees that some ring is totalMovesd to a different stack
 pred oneRingMove {
     always {
-        move implies {
+        totalMoves implies {
             some r: Ring | some r.below implies r.below' != r.below
         }
     }
 }
-// the counter always increment on a move, and stays the same when doing nothing
+// the counter always increment on a totalMoves, and stays the same when doing nothing
 pred counterChangesProperly {
     always {
         totalMoves implies {
@@ -435,7 +571,7 @@ pred minTowers2 {
     #{Tower} < 2
     #{Ring} > 1
 }
-// a trace where there is only one ring, moved from starting to ending tower
+// a trace where there is only one ring, totalMovesd from starting to ending tower
 pred oneMoveTrace {
     #{Ring} = 1
     #{Tower} = 3
@@ -454,11 +590,11 @@ pred oneMoveTrace {
         Counter.counter' = 1
     }
 }
-// some ring is moved
+// some ring is totalMovesd
 pred ringMoving[r: Ring] {
     r.below' != r.below or (some disj t1, t2: Tower | t1.top = r and t2.top' = r)
 }
-// for a trace done in the minimum number of moves, the smallest ring is moved every other step
+// for a trace done in the minimum number of totalMovess, the smallest ring is totalMovesd every other step
 pred smallestRingMovedEveryOtherTime {
     {always totalMoves until Counter.counter = 3 and always Counter.counter < 4} implies {
     some r: Ring | {
@@ -504,11 +640,11 @@ test suite for trace {
     assert smallestRingMovedEveryOtherTime is necessary for trace for exactly 2 Ring, 3 Tower
 
     test expect {
-        // too many tops change (meaning more than one ring is moved)
+        // too many tops change (meaning more than one ring is totalMovesd)
         tooManyTowersTopChange: {tooManyTowersChange and trace} is unsat
-        // can't solve puzzle in less than 3 moves
+        // can't solve puzzle in less than 3 totalMovess
         minTraceTwoRings: {trace and always Counter.counter < 3} for exactly 2 Ring, 3 Tower is unsat
-        // can solve puzzle in 3 moves
+        // can solve puzzle in 3 totalMovess
         twoRingTrace3Min: {trace and always Counter.counter < 4} for exactly 2 Ring, 3 Tower is sat
         // minimum number of towers needed for puzzle is 2
         minTowersTwo: {trace and minTowers2} is unsat
@@ -518,15 +654,15 @@ test suite for trace {
         ringsSpreadOutSat: {trace and ringsSpreadOut} is sat
         // possible that all rings are stacked but not in starting or ending
         ringsAllMiddle: {trace and ringsAllInMiddle} is sat
-        // possible to have a one move trace
+        // possible to have a one totalMoves trace
         oneMoveSat: {oneMoveTrace and trace} is sat
 
         // tests that take a long time to run (Alternatively, can verify with a run statement in model file):
-        // minimum number of moves for 3 rings, 3 towers is 7
+        // minimum number of totalMovess for 3 rings, 3 towers is 7
         // minTraceThreeRings: {trace and always Counter.counter < 7} for exactly 3 Ring, 3 Tower is unsat
-        // // minimum number of moves for 3 rings, 4 towers is 5
+        // // minimum number of totalMovess for 3 rings, 4 towers is 5
         // minTraceThreeRingsFourTowers: {trace and always Counter.counter < 5} for exactly 3 Ring, 4 Tower is unsat
-        //minimum number of moves for 4 rings, 4 towers is 9
+        // minimum number of totalMovess for 4 rings, 4 towers is 9
         // minTraceFourRingsFourTowers: {trace and always Counter.counter < 9} for exactly 4 Ring, 4 Tower is unsat
     }
 }

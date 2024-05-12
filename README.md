@@ -44,6 +44,9 @@ To view our demo video, click <a href="https://drive.google.com/drive/folders/1q
 
 - **Uno:** contains files for initial Uno model
 
+- **images:** contains images used for README
+- **README.md**
+
 ## Running our model
 
 For all models, there will be Tower sigs and Ring sigs. To clear up the graph, we suggest following these
@@ -88,7 +91,7 @@ As we step through the time states, the "below" and "top" arrows will change, re
 
 The main goal is to see if there is correspondence between the variations of the puzzle. In other words, given a trace that satisfies the constraints of one puzzle, would it satisfy the constraints for the other? And is the reverse true?
 
-Some other secondary questions/properties we looked at:
+Some other secondary questions/properties we were curious about:
 
 - What is the minimum number of moves required to satisfy each puzzle?
 - If we increase or decrease the number of rings and towers, does the minimum number of moves change?
@@ -99,21 +102,25 @@ Some other secondary questions/properties we looked at:
 
 ### "Generics" vs. "Towers"
 
-We started out modeling the three versions using exactly 3 Rings and 3 Towers. These versions are the forge files with "Towers" in their name. We kept them because we found that hardcoding a specific number of Ring and Tower sigs significantly sped up our correspondence tests (which we were running on 3 rings and 3 towers anyways).
+We started out modeling the three versions using exactly 3 Rings and 3 Towers. These versions are the forge files with "Towers" in their name. We kept them because we found that hardcoding a specific number of Ring and Tower sigs significantly sped up our correspondence tests (which we were running on 3 rings and 3 towers anyways). We didn't use a counter for these versions because the model only works with 3 Rings and 3 Towers, so looking at trace length here wasn't interesting.
 
 We then moved on to more generic versions of our models (files with "Generics" in the name), which allow for varying number of Rings and Towers. We used this version to look at the trace length property (which corresponds to the minimum number of moves it requires to solve the puzzle) because we thought it would be interesting to compare how the trace length changes when the number of towers or rings changes. However, since there is more flexibility in these models, we found that some tests take a long time to run (like correspondence). The tradeoff was flexibility for runtime.
+
+### Tower's Top Field
+
+We decided to keep track of the top ring for each tower so we know which stack belongs to which tower. Also, since each Ring keeps track of the ring below it, there wouldn't be a need for each Tower sig to keep track of all of its rings, just the very top.
 
 ## Overview of Sigs and Predicates
 
 ### Sigs
 
-Although we worked with a lot of model variations, the main Sigs are for Ring and Tower, and the basic predicates are init, move, wellformed, and endState, which are all needed to run a successful trace from start to end.
+Although we worked with a lot of model variations, the main Sigs are for Ring and Tower, and the basic predicates are init, totalMoves, doNothing, wellformed, and endState, which are all needed to run a successful (generic) trace from start to end. In the non-generic versions (which use move instead of totalMoves because it doesn't have a counter), there was no need for a do nothing transition.
 
 In the basic model, **Ring** has the _below_ field to keep track of which ring it is stacked on. **Tower** has a _top_ field to keep track of the top ring in its stack. In the magnetic variation, Ring has a _pole_ field to keep track of which pole is faced up, and Tower also has a _tpole_ polarity field which restrics which state of rings can be stacked on it. In the colored variation, Ring has an additional _col_ property to keep track of color but Tower stays the same as the basic model. In all generic versions of the models, the Ring Sig has an _order_ field to establish proper size order of the rings.
 
 ### Predicates
 
-**Init** specifies the state of the starting tower, which guarantees that all rings are in a linear stack from the starting tower. **Wellformed** ensures that no rings are stacked on smaller rings (along with other constraints for the other variations, such as ensuring alternating colors for bicolors, and ensuring same-facing disks for magnetic). **Move** specifies the action of moving one ring from one tower to another, and ensuring all other rings remain in place. **End state** specifies the state of the ending tower, which guarantees that all rings are in a linear stack from the ending tower.
+**Init** specifies the state of the starting tower, which guarantees that all rings are in a linear stack from the starting tower. **Wellformed** ensures that no rings are stacked on smaller rings (along with other constraints for the other variations, such as ensuring alternating colors for bicolors, and ensuring same-facing disks for magnetic). **Total moves** specifies the action of moving one ring from one tower to another, and ensuring all other rings remain in place. **Do nothing** keeps everything the same, which was useful for stopping the counter. **End state** specifies the state of the ending tower, which guarantees that all rings are in a linear stack from the ending tower.
 
 ## Challenges, Assumptions and Limitations
 
@@ -135,7 +142,7 @@ We repeat the above steps for all pairs of our three models, resulting in six di
 
 We defined correspondence as there always being the same number of rings per tower, for all towers. In other words, moving Ring 1 to Tower 2 corresponds to moving Magnetic Ring 1 to Magnetic Tower 2.
 
-### Current Testing Plan
+### Testing Summary 
 
 - Test to see if there is correspondence between the magnetic variation and the bicolor variation (if given a trace that satisfies the magnetic constraints, will it always satisfy the colored version?)
 - Verify that both magnetic and bicolored variations correspond to basic version (expected, bc they are just extensions of original puzzle)
@@ -150,6 +157,7 @@ We defined correspondence as there always being the same number of rings per tow
 - Verify that init and endstate are equivalent for all variations
 - For each puzzle, verify the expected trace length for two disks + three towers, four disks + three towers, etc
 - Verify all are guaranteed to be wellformed
+- Test if the pattern of moving the smallest ring every other turn is necessary for minimum trace
 - Basic unit testing for predicates
 
 ## Tool Choices and Justification

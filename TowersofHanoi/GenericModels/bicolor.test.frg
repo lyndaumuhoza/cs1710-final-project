@@ -261,7 +261,7 @@ pred ringMoveDiffTower {
 // assuming a move is made from initial stack, there is some ring which gets moved 
 // onto another stack
 pred onlyOneRingMove {
-   Binit and Bmove and #{BRing} > 1 implies {
+   Binit and BtotalMoves and #{BRing} > 1 implies {
        some r: BRing | {
            r.Bbelow' != r.Bbelow
            all r1: BRing | r1 != r implies r1.Bbelow' = r1.Bbelow
@@ -270,7 +270,7 @@ pred onlyOneRingMove {
 }
 // given a wellormed move, if there is no pre-defined order then there cannot be a stack
 pred orderPreserved {
-   Bwellformed and Bmove implies {
+   Bwellformed and BtotalMoves implies {
        all r: BRing | no r.Border implies no r.Bbelow
    }
 }
@@ -300,6 +300,7 @@ pred oneRingTwoTowerMove {
        no r1.Bbelow'
        no t1.Btop'
        t2.Btop' = r1
+       BCounter.bcounter' = add[BCounter.bcounter, 1]
    }
 }
 // three towers' top ring changes at once
@@ -311,22 +312,22 @@ pred tooManyTowersChange {
    }
 }
 
-test suite for Bmove {
-   assert oneTowerDecRing is necessary for Bmove
-   assert ringMoveDiffTower is necessary for Bmove
-   assert onlyOneRingMove is necessary for Bmove
-   assert alternatingColorsPreserved is necessary for Bmove
-   assert orderPreserved is necessary for Bmove
-   assert oneRingTwoTowerMove is sufficient for Bmove
+test suite for BtotalMoves {
+   assert oneTowerDecRing is necessary for BtotalMoves
+   assert ringMoveDiffTower is necessary for BtotalMoves
+   assert onlyOneRingMove is necessary for BtotalMoves
+   assert alternatingColorsPreserved is necessary for BtotalMoves
+   assert orderPreserved is necessary for BtotalMoves
+   assert oneRingTwoTowerMove is sufficient for BtotalMoves
 
 
    test expect {
        // basic sat test
-       moveSat: {Bmove} is sat
+       moveSat: {BtotalMoves} is sat
        // move doesn't work with only one tower
-       moveOnetower: {Bmove and #{BTower} = 1} is unsat
+       moveOnetower: {BtotalMoves and #{BTower} = 1} is unsat
        // too many towers change tops
-       threeTowersChange: {Bmove and tooManyTowersChange} is unsat
+       threeTowersChange: {BtotalMoves and tooManyTowersChange} is unsat
        // move starting from initial stack
        initialMoveEx: {
            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
@@ -346,9 +347,10 @@ test suite for Bmove {
                r2.Bbelow' = r3
                no r3.Bbelow'
                no t3.Btop'
+               BCounter.bcounter' = add[BCounter.bcounter, 1]
 
                Binit
-               Bmove
+               BtotalMoves
            }
        } is sat
 
@@ -372,8 +374,9 @@ test suite for Bmove {
                r1.Bbelow' = r3
                no r2.Bbelow'
                no r3.Bbelow'
+               BCounter.bcounter' = add[BCounter.bcounter, 1]
 
-               Bmove
+               BtotalMoves
            }
        } is sat
 
@@ -397,8 +400,9 @@ test suite for Bmove {
                r1.Bbelow' = r2
                r2.Bbelow' = r3
                no r3.Bbelow'
+               BCounter.bcounter' = add[BCounter.bcounter, 1]
 
-               Bmove
+               BtotalMoves
                next_state BendState
            }
        } is sat
@@ -426,8 +430,9 @@ test suite for Bmove {
                r1.Bbelow' = r2
                no r2.Bbelow'
                no r3.Bbelow'
+               BCounter.bcounter' = add[BCounter.bcounter, 1]
 
-               Bmove
+               BtotalMoves
            }
        } is sat
 
@@ -455,16 +460,154 @@ test suite for Bmove {
                r1.Bbelow' = r3
                no r2.Bbelow'
                no r3.Bbelow'
+               BCounter.bcounter' = add[BCounter.bcounter, 1]
 
-               Bmove
+               BtotalMoves
            }
        } is unsat
    }
 
 }
 
+--------------------------------------------
 
-// ----------------------------------
+// PREDICATES FOR TESTING DONOTHING
+
+// rings don't change "below" order
+pred allBelowStaysSame {
+    all r: BRing | r.Bbelow' = r.Bbelow
+}
+// tower tops don't change
+pred allTowerTopsStaySame {
+    all t: BTower | t.Btop' = t.Btop
+}
+// counter stays the same
+pred counterStaysSame {
+    BCounter.bcounter' = BCounter.bcounter
+}
+// one ring stays in place
+pred oneRingStays {
+    #{BRing} = 1
+    some r: BRing | BEndingTower.Btop = r and BEndingTower.Btop' = r and r.Bbelow' = r.Bbelow
+    all t: BTower | t != BEndingTower implies t.Btop' = t.Btop
+    BCounter.bcounter = BCounter.bcounter'
+}
+// rings not correctly ordered
+pred unorderedRings {
+    some disj r1, r2: BRing | r1.Border = r2 and r2.Bbelow = r1
+}
+// below (which defines ring stack) changes
+pred belowChanges {
+    ^Bbelow != ^Bbelow'
+}
+
+test suite for BdoNothing {
+    assert allBelowStaysSame is necessary for BdoNothing
+    assert allTowerTopsStaySame is necessary for BdoNothing
+    assert counterStaysSame is necessary for BdoNothing
+    assert oneRingStays is sufficient for BdoNothing
+
+    test expect {
+        //basic sat test
+        doNothingSat: {BdoNothing} is sat
+        // not possible to do transitions at once
+        twoTransitionsAtOnce: {BdoNothing and BtotalMoves} is unsat
+        // possible to do nothing with incorrect order 
+        unorderedDoNothing: {unorderedRings and BdoNothing} is sat
+        // not possible for below to change if doing nothing
+        belowChangesUnsat: {BdoNothing and belowChanges} is unsat
+        // do nothing example: all three rings stay in place 
+        doNothingEx: {
+            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
+                r1.col = Black
+                r2.col = White
+                r3.col = Black
+                r1.Border = r2
+                r2.Border = r3
+                no r3.Border
+
+                no t1.Btop
+                t2.Btop = r1
+                no r1.Bbelow
+                t3.Btop = r2
+                r2.Bbelow = r3
+                no r3.Bbelow
+
+                no t1.Btop'
+                t2.Btop' = r1
+                no r1.Bbelow'
+                t3.Btop' = r2
+                r2.Bbelow' = r3
+                no r3.Bbelow'
+                BCounter.bcounter' = BCounter.bcounter
+
+                BdoNothing
+            }
+        } for exactly 3 BRing, 3 BTower is sat
+
+                
+        // do nothing non-example: ring moves to another tower
+        doNothingBadMove: {
+            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
+                r1.col = Black
+                r2.col = White
+                r3.col = Black
+                r1.Border = r2
+                r2.Border = r3
+                no r3.Border
+
+                no t1.Btop
+                t2.Btop = r1
+                no r1.Bbelow
+                t3.Btop = r2
+                r2.Bbelow = r3
+                no r3.Bbelow
+
+                no t1.Btop'
+                no t2.Btop'
+                t3.Btop' = r1
+                r1.Bbelow' = r2
+                r2.Bbelow' = r3
+                no r3.Bbelow'
+                BCounter.bcounter' = BCounter.bcounter
+
+                BdoNothing
+            }
+        } for exactly 3 BRing, 3 BTower is unsat
+
+        // do nothing non-example: counter increments
+        doNothingBadCounter: {
+            some disj r1, r2, r3: BRing, t1, t2, t3: BTower | {
+                r1.col = Black
+                r2.col = White
+                r3.col = Black
+                r1.Border = r2
+                r2.Border = r3
+                no r3.Border
+
+                no t1.Btop
+                t2.Btop = r1
+                no r1.Bbelow
+                t3.Btop = r2
+                r2.Bbelow = r3
+                no r3.Bbelow
+                
+                no t1.Btop'
+                t2.Btop' = r1
+                no r1.Bbelow'
+                t3.Btop' = r2
+                r2.Bbelow' = r3
+                no r3.Bbelow'
+                BCounter.bcounter' = add[BCounter.bcounter, 1]
+
+                BdoNothing
+            }
+        } for exactly 3 BRing, 3 BTower is unsat
+    }
+}
+
+
+ ----------------------------------
 
 // PREDICATES FOR TESTING ENDSTATE
 
@@ -474,7 +617,7 @@ pred allRingsInEndTower {
 }
 // given a trace, it is expected that all rings are in order
 pred traceMustEndInOrder {
-   {Binit and always Bmove and eventually BendState} implies allRingInOrder
+   {Binit and always BtotalMoves and eventually BendState} implies allRingInOrder
 }
 // there is some ring in the starting tower
 pred someRingInStarting {
@@ -608,7 +751,7 @@ pred ringsStartAtStartingTower {
 // a move always guarantees that some ring is moved to a different stack
 pred oneRingMove {
    always {
-       Bmove implies {
+       BtotalMoves implies {
            some r: BRing | some r.Bbelow implies r.Bbelow' != r.Bbelow
        }
    }

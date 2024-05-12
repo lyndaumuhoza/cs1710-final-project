@@ -27,7 +27,7 @@ sig MRing {
 }
 
 // Counter keeps track of how many moves are made
-sig MCounter {
+one sig MCounter {
     var Mcounter: one Int
 }
 
